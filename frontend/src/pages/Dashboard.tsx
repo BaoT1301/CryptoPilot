@@ -1,22 +1,71 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 
 export default function Dashboard() {
-  const cryptos = [
-    { id: 1, name: 'Bitcoin', symbol: 'BTC', price: 90000, change: 1.8, holdings: 0.15 },
-    { id: 2, name: 'Ethereum', symbol: 'ETH', price: 3000, change: -2.1, holdings: 2.5 },
-    { id: 3, name: 'XRP', symbol: 'XRP', price: 2.10, change: 12.5, holdings: 1500 },
-    { id: 4, name: 'Solana', symbol: 'SOL', price: 135, change: -3.4, holdings: 8 },
-  ];
+  
+  const [selectedCoin, setSelectedCoin] = useState('BTC');
 
-   const priceChartData = [
-    { date: 'Nov 21', BTC: 5000, ETH: 2850, SOL: 145, XRP: 1.75 },
-    { date: 'Nov 22', BTC: 4000, ETH: 2920, SOL: 152, XRP: 1.68 },  
-    { date: 'Nov 23', BTC: 6000, ETH: 2780, SOL: 148, XRP: 1.82 },  
-    { date: 'Nov 24', BTC: 6500, ETH: 3050, SOL: 158, XRP: 1.95 },  
-    { date: 'Nov 25', BTC: 6800, ETH: 3180, SOL: 162, XRP: 2.12 },  
-    { date: 'Nov 26', BTC: 7000, ETH: 2990, SOL: 138, XRP: 2.05 },  
-    { date: 'Nov 27', BTC: 6500, ETH: 3000, SOL: 135, XRP: 2.10 },  
+  const [livePrices, setLivePrices] = useState({
+    BTC: 0,
+    ETH: 0,
+    XRP: 0,
+    SOL: 0
+  });
+
+   const [priceChartData, setPriceChartData] = useState<Array<{
+    date: string;
+    BTC: number;
+    ETH: number;
+    SOL: number;
+    XRP: number;
+  }>>([]);
+
+  useEffect(() => {
+    const socket = io('http://localhost:3000');
+
+    socket.on('priceUpdate', (prices) => {
+      setLivePrices({
+        BTC: parseFloat(prices.BTC),
+        ETH: parseFloat(prices.ETH),
+        XRP: parseFloat(prices.XRP),
+        SOL: parseFloat(prices.SOL)
+      });
+
+       setPriceChartData(prevData => {
+        const now = new Date();
+        const timeLabel = now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+
+        const newPoint = {
+          date: timeLabel,
+          BTC: parseFloat(prices.BTC) || 0,
+          ETH: parseFloat(prices.ETH) || 0,
+          XRP: parseFloat(prices.XRP) || 0,
+          SOL: parseFloat(prices.SOL) || 0
+        };
+
+        // Keep last 20 points (about 20 seconds of data)
+        return [...prevData, newPoint].slice(-20);
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  
+  const cryptos = [
+    { id: 1, name: 'Bitcoin', symbol: 'BTC', price: livePrices.BTC, change: 1.8, holdings: 0.15 },
+    { id: 2, name: 'Ethereum', symbol: 'ETH', price: livePrices.ETH, change: -2.1, holdings: 2.5 },
+    { id: 3, name: 'XRP', symbol: 'XRP', price: livePrices.XRP, change: 12.5, holdings: 1500 },
+    { id: 4, name: 'Solana', symbol: 'SOL', price: livePrices.SOL, change: -3.4, holdings: 8 },
   ];
 
   const recentTransactions = [
@@ -26,6 +75,17 @@ export default function Dashboard() {
     { id: 4, type: 'Buy', crypto: 'ETH', amount: 1, price: 2980, date: 'Nov 26, 2:20 PM' },
   ];
 
+  if (livePrices.BTC === 0 || livePrices.ETH === 0 || livePrices.XRP === 0 || livePrices.SOL === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500 bg-background">
+        <div className="text-center">
+          <div className="text-4xl mb-2 animate-bounce">📊</div>
+          <p className="text-lg font-semibold">Waiting for price data...</p>
+          <p className="text-xs mt-1">Connecting to live market...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-6xl mx-auto">
@@ -72,22 +132,44 @@ export default function Dashboard() {
          {/* Price Chart */}
         <Card className="mb-8 hover:shadow-lg transition-shadow duration-300">
           <CardHeader>
-            <CardTitle>Price Trends (7 Days)</CardTitle>
+            <CardTitle>Live Price Chart</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={priceChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="BTC" stroke="#F7931A" strokeWidth={2} name="Bitcoin" />
-                <Line type="monotone" dataKey="ETH" stroke="#627EEA" strokeWidth={2} name="Ethereum" />
-                <Line type="monotone" dataKey="SOL" stroke="#14F195" strokeWidth={2} name="Solana" />
-                <Line type="monotone" dataKey="XRP" stroke="#23292F" strokeWidth={2} name="XRP" />
+                <XAxis 
+                  dataKey="date"
+                  tick={{ fontSize: 10 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60} />
+                <YAxis 
+                  domain={['auto', 'auto']} 
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) => `$${value.toLocaleString()}`} 
+                />
+                 <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, selectedCoin]} />
+                 <Legend />
+                
+                {selectedCoin === 'BTC' && (
+                  <Line type="monotone" dataKey="BTC" stroke="#F7931A" strokeWidth={2} name="Bitcoin" dot={false} isAnimationActive={false} />
+                )}
+                {selectedCoin === 'ETH' && (
+                  <Line type="monotone" dataKey="ETH" stroke="#627EEA" strokeWidth={2} name="Ethereum" dot={false} isAnimationActive={false} />
+                )}
+                {selectedCoin === 'SOL' && (
+                  <Line type="monotone" dataKey="SOL" stroke="#14F195" strokeWidth={2} name="Solana" dot={false} isAnimationActive={false} />
+                )}
+                {selectedCoin === 'XRP' && (
+                  <Line type="monotone" dataKey="XRP" stroke="#23292F" strokeWidth={2} name="XRP" dot={false} isAnimationActive={false} />
+                )}
               </LineChart>
             </ResponsiveContainer>
+             
+             <p className="text-xs text-gray-500 mt-2 text-center">
+                  Showing last {priceChartData.length} updates
+                </p>
           </CardContent>
         </Card>
 
@@ -103,6 +185,7 @@ export default function Dashboard() {
             
             {cryptos.map((crypto) => {
               const isPositive = crypto.change >= 0;
+              const isSelected = selectedCoin === crypto.symbol;
               
               let textColor = '';
               if (isPositive) {
@@ -117,15 +200,19 @@ export default function Dashboard() {
               }
               
               return (
-                <div key={crypto.id} className="flex justify-between items-center p-4 hover:bg-gray-100 rounded transition-colors duration-200 cursor-pointer">
+                <div 
+                key={crypto.id} 
+                onClick={() => setSelectedCoin(crypto.symbol)}
+                className={`flex justify-between items-center p-4 rounded transition-colors duration-200 cursor-pointer ${
+                isSelected ? 'bg-gray-200 border-l-4 border-primary' : 'hover:bg-gray-100'}`}>
                   <div>
                     <p className="font-bold">{crypto.name}</p>
                     <p className="text-sm text-gray-500">{crypto.holdings} {crypto.symbol}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold">${crypto.price.toLocaleString()}</p>
-                    <p className={`text-sm ${textColor}`}>
-                      {sign}{crypto.change}%
+                    <p className={`text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                      {isPositive ? '+' : ''}{crypto.change}%
                     </p>
                   </div>
                 </div>
