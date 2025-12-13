@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ThemeToggle from "./ui/toggle";
+import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 
@@ -19,9 +20,9 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-8">
           <Link
-            to="/dashboard"  
+            to="/dashboard"
             className="text-foreground hover:text-primary transition-colors"
           >
             Dashboard
@@ -32,10 +33,18 @@ export default function Header() {
           >
             About
           </Link>
+
+          <Link
+            to="/history"
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            History
+          </Link>
         </div>
 
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           {!authenticated ? (
             <>
               <Button asChild variant="outline" size="default">
@@ -49,6 +58,7 @@ export default function Header() {
             <Button
               onClick={() => {
                 logout();
+                navigate("/");
                 navigate('/');
               }}
               variant="destructive"

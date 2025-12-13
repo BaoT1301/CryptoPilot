@@ -5,6 +5,7 @@ import About from "./pages/About";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import History from "./pages/History";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/history" element={<History />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
           </Routes>
