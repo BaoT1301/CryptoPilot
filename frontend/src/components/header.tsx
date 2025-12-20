@@ -40,6 +40,12 @@ export default function Header() {
           >
             History
           </Link>
+          <Link
+            to="/wallet"
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Wallet
+          </Link>
         </div>
 
         {/* Desktop Buttons */}

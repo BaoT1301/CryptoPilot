@@ -8,6 +8,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import History from "./pages/History";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Wallet from "./pages/Wallet";
+
 
 export default function App() {
   return (
@@ -19,6 +21,7 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/wallet" element={<Wallet />} />
             <Route path="/history" element={<History />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
