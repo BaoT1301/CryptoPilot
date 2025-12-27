@@ -8,7 +8,6 @@ import { useAuth } from "../lib/AuthContext";
 export default function Header() {
   const navigate = useNavigate();
   const { authenticated, logout } = useAuth();
-
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -27,6 +26,14 @@ export default function Header() {
           >
             Dashboard
           </Link>
+          {authenticated && (
+            <Link
+              to="/profile"
+              className="text-foreground hover:text-primary transition-colors"
+            >
+              Profile
+            </Link>
+          )}
           <Link
             to="/about"
             className="text-foreground hover:text-primary transition-colors"
