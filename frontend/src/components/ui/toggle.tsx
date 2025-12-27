@@ -1,16 +1,19 @@
 import { useTheme } from "@/contexts/useTheme";
-import { Button } from "./button";
+import { Switch } from "./switch";
+import { Sun, Moon } from "lucide-react";
+
 const ThemeToggle = () => {
   const { isDark, toggleTheme } = useTheme();
   return (
-    <Button
-      variant="secondary"
-      onClick={toggleTheme}
-      className="cursor-pointer"
-      aria-label="Toggle theme"
-    >
-      {isDark ? "Light Mode" : "Dark Mode"}
-    </Button>
+    <div className="flex items-center gap-2">
+      <Sun size={16} aria-hidden />
+      <Switch
+        checked={isDark}
+        onCheckedChange={() => toggleTheme()}
+        aria-label="Toggle theme"
+      />
+      <Moon size={16} aria-hidden />
+    </div>
   );
 };
 

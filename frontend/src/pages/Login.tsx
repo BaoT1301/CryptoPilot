@@ -1,40 +1,48 @@
-import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginForm } from '../lib/validators';
-import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Field, FieldLabel, FieldError, FieldSet, FieldGroup } from '@/components/ui/field';
-
-// use your helper (auth.ts) instead of AuthContext for now
-import { login as loginFn } from '../lib/auth';
+import { useNavigate, useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginForm } from "../lib/validators";
+import { Link } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldSet,
+  FieldGroup,
+} from "@/components/ui/field";
+import { useAuth } from "../lib/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as any)?.from?.pathname || '/';
+  const from = (location.state as any)?.from?.pathname || "/";
+  const { login } = useAuth();
 
   const {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema)
+    resolver: zodResolver(loginSchema),
   });
-
   async function onSubmit(data: LoginForm) {
-    const res = await loginFn(data.email, data.password);
+    const res = await login(data.email, data.password);
 
     if (res.success) {
-      // token is already saved in localStorage by api.ts
-      const safeFrom = ['/login', '/signup'].includes(from) ? '/' : from;
+      const safeFrom = ["/login", "/signup"].includes(from) ? "/" : from;
       navigate(safeFrom, { replace: true });
     } else {
-      setError('root', { message: res.message || 'Login failed' });
+      setError("root", { message: res.message || "Login failed" });
     }
   }
 
@@ -46,29 +54,40 @@ export default function Login() {
             <CardTitle>Log in</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="flex flex-col gap-4"
+            >
               <FieldSet>
                 <FieldGroup>
                   <Field>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email" required>
+                      Email
+                    </FieldLabel>
                     <Input
                       id="email"
                       type="email"
                       placeholder="you@example.com"
-                      {...register('email')}
+                      {...register("email")}
                     />
-                    {errors.email && <FieldError>{errors.email.message}</FieldError>}
+                    {errors.email && (
+                      <FieldError>{errors.email.message}</FieldError>
+                    )}
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password" required>
+                      Password
+                    </FieldLabel>
                     <Input
                       id="password"
                       type="password"
                       placeholder="••••••••"
-                      {...register('password')}
+                      {...register("password")}
                     />
-                    {errors.password && <FieldError>{errors.password.message}</FieldError>}
+                    {errors.password && (
+                      <FieldError>{errors.password.message}</FieldError>
+                    )}
                   </Field>
                 </FieldGroup>
               </FieldSet>
@@ -76,16 +95,22 @@ export default function Login() {
               {errors.root && <FieldError>{errors.root.message}</FieldError>}
 
               <CardFooter className="px-0 pt-0">
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? 'Logging in…' : 'Log in'}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Logging in…" : "Log in"}
                 </Button>
               </CardFooter>
 
               <div className="text-sm text-muted-foreground mt-2 text-center">
-                Don't have an account?{' '}
+                Don't have an account?{" "}
                 <Link
                   to="/signup"
-                  state={{ from: (location.state as any)?.from || location.pathname }}
+                  state={{
+                    from: (location.state as any)?.from || location.pathname,
+                  }}
                   className="text-primary underline"
                 >
                   Create an account

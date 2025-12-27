@@ -1,16 +1,30 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ui/toggle";
-import { useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
+import { User, Wallet, LogOut, History } from "lucide-react";
 
 export default function Header() {
   const navigate = useNavigate();
-  const { authenticated, logout } = useAuth();
+  const { authenticated, logout, user } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">₿</span>
@@ -20,65 +34,81 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          <Link
-            to="/dashboard"
-            className="text-foreground hover:text-primary transition-colors"
-          >
+          <Link to="/dashboard" className="hover:text-primary">
             Dashboard
           </Link>
-          {authenticated && (
-            <Link
-              to="/profile"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              Profile
-            </Link>
-          )}
-          <Link
-            to="/about"
-            className="text-foreground hover:text-primary transition-colors"
-          >
+          <Link to="/about" className="hover:text-primary">
             About
           </Link>
-
-          <Link
-            to="/history"
-            className="text-foreground hover:text-primary transition-colors"
-          >
-            History
-          </Link>
-          <Link
-            to="/wallet"
-            className="text-foreground hover:text-primary transition-colors"
-          >
+          <Link to="/wallet" className="hover:text-primary">
             Wallet
           </Link>
         </div>
 
-        {/* Desktop Buttons */}
+        {/* Right actions */}
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
+
           {!authenticated ? (
             <>
-              <Button asChild variant="outline" size="default">
+              <Button asChild variant="outline">
                 <Link to="/login">Sign In</Link>
               </Button>
-              <Button asChild variant="default" size="default">
+              <Button asChild>
                 <Link to="/signup">Get Started</Link>
               </Button>
             </>
           ) : (
-            <Button
-              onClick={() => {
-                logout();
-                navigate("/");
-                navigate('/');
-              }}
-              variant="destructive"
-              size="default"
-            >
-              Log out
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="h-8 w-8 cursor-pointer">
+                  <AvatarFallback>
+                    {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/history"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <History className="h-4 w-4 text-muted-foreground" />
+                    History
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/wallet"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                    Wallet
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-destructive focus:text-destructive flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </nav>
