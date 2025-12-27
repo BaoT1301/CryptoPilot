@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '../lib/AuthContext';
 import { loginSchema, type LoginForm } from '../lib/validators';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -10,12 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldLabel, FieldError, FieldSet, FieldGroup } from '@/components/ui/field';
 
+// use your helper (auth.ts) instead of AuthContext for now
+import { login as loginFn } from '../lib/auth';
+
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
   const from = (location.state as any)?.from?.pathname || '/';
-  
+
   const {
     register,
     handleSubmit,
@@ -26,8 +27,10 @@ export default function Login() {
   });
 
   async function onSubmit(data: LoginForm) {
-    const res = await login(data.email, data.password);
+    const res = await loginFn(data.email, data.password);
+
     if (res.success) {
+      // token is already saved in localStorage by api.ts
       const safeFrom = ['/login', '/signup'].includes(from) ? '/' : from;
       navigate(safeFrom, { replace: true });
     } else {
@@ -77,6 +80,7 @@ export default function Login() {
                   {isSubmitting ? 'Logging in…' : 'Log in'}
                 </Button>
               </CardFooter>
+
               <div className="text-sm text-muted-foreground mt-2 text-center">
                 Don't have an account?{' '}
                 <Link

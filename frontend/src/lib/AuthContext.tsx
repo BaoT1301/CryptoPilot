@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const res = await auth.signup(name, email, password);
+    const res = await auth.signupWithName(name, email, password);
     if (res.success) setAuthenticated(true);
     return res;
   };
