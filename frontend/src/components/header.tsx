@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ui/toggle";
 import { useAuth } from "../lib/AuthContext";
@@ -60,11 +60,16 @@ export default function Header() {
             </>
           ) : (
             <DropdownMenu>
+              {/* display avatar */}
               <DropdownMenuTrigger asChild>
                 <Avatar className="h-8 w-8 cursor-pointer">
-                  <AvatarFallback>
-                    {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
-                  </AvatarFallback>
+                  {user?.avatar ? (
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                  ) : (
+                    <AvatarFallback>
+                      {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
               </DropdownMenuTrigger>
 

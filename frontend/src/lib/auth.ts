@@ -14,6 +14,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  avatar?: string;
   role: "user" | "admin";
 };
 
@@ -56,12 +57,14 @@ export function getCurrentUser(): User | null {
 
   const p = decodeJWT(token);
   if (!p || isExpired(p)) return null;
+  const storedAvatar = localStorage.getItem("user_avatar");
 
   return {
     id: p.userId,
     email: p.userEmail,
     name: p.userName,
     role: p.role,
+    avatar: storedAvatar || undefined,
   };
 }
 

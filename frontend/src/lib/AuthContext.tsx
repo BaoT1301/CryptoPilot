@@ -6,6 +6,7 @@ import { AUTH_KEY } from "./constants";
 type AuthContextType = {
   authenticated: boolean;
   user: User | null;
+  setUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<auth.AuthResponse>;
   signup: (
     name: string,
@@ -64,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ authenticated, user, login, signup, logout }}
+      value={{ authenticated, user, setUser, login, signup, logout }}
     >
       {children}
     </AuthContext.Provider>
