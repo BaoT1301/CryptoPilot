@@ -1,13 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
-import { createDeposit, createWithdraw, getAssets, getDeposit, getDepositById, getListWithdraw, getWithdraw } from "@/api/wallet/walletAPI";
+import {
+  createDeposit,
+  createWithdraw,
+  getAssets,
+  getDeposit,
+  getDepositById,
+  getListWithdraw,
+  getWithdraw,
+} from "@/api/wallet/walletAPI";
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DepositHistory } from "@/components/wallet/walletHistory";
-import { WalletOverview } from "@/components/wallet/WalletOverview";
+import { WalletOverview } from "@/components/wallet/walletOverview";
 import { CreateDepositCard } from "@/components/wallet/walletCreate";
 import { DepositDetailsCard } from "@/components/wallet/walletDetail";
 import { Spinner } from "@/components/ui/spinner";
-import type { Asset, CreateWithdraw, Deposit, NetworkKey, WithdrawListResponse } from "@/types/wallet";
+import type {
+  Asset,
+  CreateWithdraw,
+  Deposit,
+  NetworkKey,
+  WithdrawListResponse,
+} from "@/types/wallet";
 import { WithdrawDetailsCard } from "@/components/wallet/walletWithdraw";
 import { WithdrawCreateCard } from "@/components/wallet/walletWithdrawCreate";
 import { WithdrawHistory } from "@/components/wallet/walletWithdrawHistory";
@@ -22,11 +36,14 @@ const queryClient = new QueryClient({
 });
 
 export default function WalletPage() {
-
   const [tab, setTab] = useState<"wallet" | "deposit" | "withdraw">("wallet");
 
-  const [selectedDepositId, setSelectedDepositId] = useState<string | null>(null);
-  const [selectedWithdrawId, setSelectedWithdrawId] = useState<string | null>(null);
+  const [selectedDepositId, setSelectedDepositId] = useState<string | null>(
+    null
+  );
+  const [selectedWithdrawId, setSelectedWithdrawId] = useState<string | null>(
+    null
+  );
 
   const [withdrawAsset, setWithdrawAsset] = useState("");
   const [withdrawNetwork, setWithdrawNetwork] = useState<NetworkKey | "">("");
@@ -45,7 +62,12 @@ export default function WalletPage() {
     queryFn: getAssets,
   });
 
-  const { data, isPending, error: depositErrors, isError } = useQuery({
+  const {
+    data,
+    isPending,
+    error: depositErrors,
+    isError,
+  } = useQuery({
     queryKey: ["deposits", page],
     queryFn: () =>
       getDeposit({
@@ -67,12 +89,12 @@ export default function WalletPage() {
   });
 
   const selectedAsset = useMemo<Asset | null>(() => {
-    return assets.find(a => a.symbol === assetSymbol) ?? null;
+    return assets.find((a) => a.symbol === assetSymbol) ?? null;
   }, [assets, assetSymbol]);
 
   const selectedNetwork = useMemo(() => {
     if (!selectedAsset) return null;
-    return selectedAsset.networks.find(n => n.key === networkKey) ?? null;
+    return selectedAsset.networks.find((n) => n.key === networkKey) ?? null;
   }, [selectedAsset, networkKey]);
 
   useEffect(() => {
@@ -96,13 +118,14 @@ export default function WalletPage() {
   //withdraw
 
   const balancesByAssetNetwork = useMemo(() => {
-  const map: Record<string, Record<string, number>> = {};
+    const map: Record<string, Record<string, number>> = {};
 
-  deposits
-      .filter(d => d.status === "COMPLETED")
-      .forEach(d => {
+    deposits
+      .filter((d) => d.status === "COMPLETED")
+      .forEach((d) => {
         if (!map[d.asset]) map[d.asset] = {};
-        map[d.asset][d.network] = (map[d.asset][d.network] || 0) + Number(d.amount);
+        map[d.asset][d.network] =
+          (map[d.asset][d.network] || 0) + Number(d.amount);
       });
 
     return map;
@@ -110,8 +133,10 @@ export default function WalletPage() {
 
   // get only assets that have balance > 0
   const withdrawableAssets = useMemo(() => {
-    return assets.filter(asset =>
-      Object.values(balancesByAssetNetwork[asset.symbol] || {}).some(v => v > 0)
+    return assets.filter((asset) =>
+      Object.values(balancesByAssetNetwork[asset.symbol] || {}).some(
+        (v) => v > 0
+      )
     );
   }, [assets, balancesByAssetNetwork]);
 
@@ -132,7 +157,10 @@ export default function WalletPage() {
   // auto-select first available asset/network
   useEffect(() => {
     if (withdrawableAssets.length === 0) return;
-    if (!withdrawAsset || !withdrawableAssets.find(a => a.symbol === withdrawAsset)) {
+    if (
+      !withdrawAsset ||
+      !withdrawableAssets.find((a) => a.symbol === withdrawAsset)
+    ) {
       setWithdrawAsset(withdrawableAssets[0].symbol);
     }
   }, [withdrawableAssets, withdrawAsset]);
@@ -146,12 +174,15 @@ export default function WalletPage() {
 
   // get selected asset/network objects
   const selectedWithdrawAsset = useMemo<Asset | null>(() => {
-    return withdrawableAssets.find(a => a.symbol === withdrawAsset) ?? null;
+    return withdrawableAssets.find((a) => a.symbol === withdrawAsset) ?? null;
   }, [withdrawableAssets, withdrawAsset]);
 
   const selectedWithdrawNetwork = useMemo(() => {
     if (!selectedWithdrawAsset) return null;
-    return selectedWithdrawAsset.networks.find(n => n.key === withdrawNetwork) ?? null;
+    return (
+      selectedWithdrawAsset.networks.find((n) => n.key === withdrawNetwork) ??
+      null
+    );
   }, [selectedWithdrawAsset, withdrawNetwork]);
 
   // get withdraw list
@@ -187,7 +218,6 @@ export default function WalletPage() {
       setPage(1);
     },
   });
-
 
   //error
   const errorMessage = depositErrors || depositError || createMutation.error;
@@ -237,7 +267,7 @@ export default function WalletPage() {
           </TabsList>
 
           <TabsContent value="wallet" className="space-y-4">
-          <WalletOverview
+            <WalletOverview
               deposits={deposits}
               withdraw={withdraws}
               assets={assets}
@@ -247,8 +277,8 @@ export default function WalletPage() {
               }}
               hasNext={hasNext}
               hasPrev={hasPrev}
-              onNext={() => setPage(p => p + 1)}
-              onPrev={() => setPage(p => Math.max(1, p - 1))}
+              onNext={() => setPage((p) => p + 1)}
+              onPrev={() => setPage((p) => Math.max(1, p - 1))}
               isLoading={isPending}
               currentPage={page}
             />
@@ -284,53 +314,53 @@ export default function WalletPage() {
               onSelect={setSelectedDepositId}
               hasNext={hasNext}
               hasPrev={hasPrev}
-              onNext={() => setPage(p => p + 1)}
-              onPrev={() => setPage(p => Math.max(1, p - 1))}
+              onNext={() => setPage((p) => p + 1)}
+              onPrev={() => setPage((p) => Math.max(1, p - 1))}
               isLoading={isPending}
               currentPage={page}
             />
           </TabsContent>
           <TabsContent value="withdraw" className="space-y-4">
             <div className="grid gap-4 lg:grid-cols-2">
-            {selectedWithdrawAsset && selectedWithdrawNetwork && (
-              <WithdrawCreateCard
-                withdrawableAssets={withdrawableAssets}
-                withdrawableNetworks={withdrawableNetworks}
-                selectedAsset={selectedWithdrawAsset}
-                selectedNetwork={selectedWithdrawNetwork}
-                assetSymbol={withdrawAsset}
-                setAssetSymbol={setWithdrawAsset}
-                networkKey={withdrawNetwork}
-                setNetworkKey={setWithdrawNetwork}
-                amount={withdrawAmount}
-                setAmount={setWithdrawAmount}
-                address={withdrawAddress}
-                setAddress={setWithdrawAddress}
-                availableBalance={availableBalance}
-                isSubmitting={createWithdrawMutation.isPending}
-                onSubmit={() => {
-                  if (!withdrawAmount || Number(withdrawAmount) <= 0) return;
-                  if (Number(withdrawAmount) > availableBalance) return;
-                  if (!withdrawAddress.trim()) return;
-                
-                  const withdrawData: CreateWithdraw = {
-                    asset: withdrawAsset,
-                    network: withdrawNetwork,
-                    address: withdrawAddress,
-                    amount: withdrawAmount,
-                    //fee: selectedWithdrawNetwork?.withdrawalFee ?? 0,
-                    fee: 0,
-                    confirmations: 0,
-                    status: 'PENDING',
-                    createdAt: new Date(),
-                    processedAt: null,
-                    completedAt: null,
-                  };
-                
-                  createWithdrawMutation.mutate(withdrawData);
-                }}
-              />
-            )}
+              {selectedWithdrawAsset && selectedWithdrawNetwork && (
+                <WithdrawCreateCard
+                  withdrawableAssets={withdrawableAssets}
+                  withdrawableNetworks={withdrawableNetworks}
+                  selectedAsset={selectedWithdrawAsset}
+                  selectedNetwork={selectedWithdrawNetwork}
+                  assetSymbol={withdrawAsset}
+                  setAssetSymbol={setWithdrawAsset}
+                  networkKey={withdrawNetwork}
+                  setNetworkKey={setWithdrawNetwork}
+                  amount={withdrawAmount}
+                  setAmount={setWithdrawAmount}
+                  address={withdrawAddress}
+                  setAddress={setWithdrawAddress}
+                  availableBalance={availableBalance}
+                  isSubmitting={createWithdrawMutation.isPending}
+                  onSubmit={() => {
+                    if (!withdrawAmount || Number(withdrawAmount) <= 0) return;
+                    if (Number(withdrawAmount) > availableBalance) return;
+                    if (!withdrawAddress.trim()) return;
+
+                    const withdrawData: CreateWithdraw = {
+                      asset: withdrawAsset,
+                      network: withdrawNetwork,
+                      address: withdrawAddress,
+                      amount: withdrawAmount,
+                      //fee: selectedWithdrawNetwork?.withdrawalFee ?? 0,
+                      fee: 0,
+                      confirmations: 0,
+                      status: "PENDING",
+                      createdAt: new Date(),
+                      processedAt: null,
+                      completedAt: null,
+                    };
+
+                    createWithdrawMutation.mutate(withdrawData);
+                  }}
+                />
+              )}
               <WithdrawDetailsCard withdraw={selectedWithdraw ?? null} />
             </div>
             <WithdrawHistory
@@ -339,8 +369,8 @@ export default function WalletPage() {
               onSelect={setSelectedWithdrawId}
               hasNext={withdraws.length === PAGE_SIZE}
               hasPrev={hasPrev}
-              onNext={() => setPage(p => p + 1)}
-              onPrev={() => setPage(p => Math.max(1, p - 1))}
+              onNext={() => setPage((p) => p + 1)}
+              onPrev={() => setPage((p) => Math.max(1, p - 1))}
               isLoading={isPending}
               currentPage={page}
             />

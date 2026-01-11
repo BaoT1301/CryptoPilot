@@ -1,17 +1,11 @@
 export type DepositStatus = "PENDING" | "COMPLETED" | "FAILED";
 
-export type NetworkKey =
-  | "bitcoin"
-  | "ethereum"
-  | "bsc"
-  | "xrp"
-  | "solana"
-  | "";
+export type NetworkKey = "bitcoin" | "ethereum" | "bsc" | "BNB" | "solana" | "";
 
 export type NetworkConfig = {
   key: NetworkKey;
   label: string;
-  addressFormat: "btc" | "evm" | "xrp" | "solana";
+  addressFormat: "btc" | "evm" | "BNB" | "solana";
   requiredConfirmations: number;
   estimatedBlockTimeSec: number;
 };
@@ -36,9 +30,8 @@ export type Deposit = {
   updatedAt: string;
   networkMeta: Pick<
     NetworkConfig,
-    "requiredConfirmations" | "estimatedBlockTimeSec">;
-
-
+    "requiredConfirmations" | "estimatedBlockTimeSec"
+  >;
 };
 
 export type ListDepositParams = {
@@ -56,9 +49,12 @@ export type CreateDeposit = {
   amount?: string;
 };
 
-
-export type WithdrawStatus =  'PENDING'| 'PROCESSING'| 'COMPLETED'| 'FAILED'| 'CANCELLED'
-
+export type WithdrawStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "FAILED"
+  | "CANCELLED";
 
 export type Withdraw = {
   _id: string;
@@ -77,8 +73,9 @@ export type Withdraw = {
   completedAt?: Date | null;
   networkMeta: Pick<
     NetworkConfig,
-    "requiredConfirmations" | "estimatedBlockTimeSec">;
-}
+    "requiredConfirmations" | "estimatedBlockTimeSec"
+  >;
+};
 export type WithdrawListResponse = {
   data: Withdraw[];
   limit: number;

@@ -1,12 +1,11 @@
-import { Button } from "@/components/ui/button";
 import type { Withdraw } from "@/types/wallet";
 import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationNext,
-    PaginationPrevious,
-  } from "@/components/ui/pagination";
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 type Props = {
   withdraws: Withdraw[];
   selectedId: string | null;
@@ -37,13 +36,11 @@ export function WithdrawHistory({
       {isLoading && <div>Loading...</div>}
 
       {!isLoading && withdraws.length === 0 && (
-        <div className="text-sm text-muted-foreground">
-          No withdraws yet
-        </div>
+        <div className="text-sm text-muted-foreground">No withdraws yet</div>
       )}
 
       <div className="space-y-2">
-        {withdraws.map(w => (
+        {withdraws.map((w) => (
           <button
             key={w._id}
             onClick={() => onSelect(w._id)}
@@ -66,29 +63,33 @@ export function WithdrawHistory({
 
       {(hasPrev || hasNext) && (
         <Pagination>
-        <PaginationContent>
+          <PaginationContent>
             <PaginationItem>
-            <PaginationPrevious
+              <PaginationPrevious
                 onClick={onPrev}
                 aria-disabled={!hasPrev}
-                className={!hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            />
+                className={
+                  !hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"
+                }
+              />
             </PaginationItem>
 
             <PaginationItem>
-            <span className="text-sm px-4">{currentPage}</span>
+              <span className="text-sm px-4">{currentPage}</span>
             </PaginationItem>
 
             <PaginationItem>
-            <PaginationNext
+              <PaginationNext
                 onClick={onNext}
                 aria-disabled={!hasNext}
-                className={!hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            />
+                className={
+                  !hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"
+                }
+              />
             </PaginationItem>
-        </PaginationContent>
+          </PaginationContent>
         </Pagination>
-    )}
+      )}
     </div>
   );
 }

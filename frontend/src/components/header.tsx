@@ -10,7 +10,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ui/toggle";
 import { useAuth } from "../lib/AuthContext";
-import { User, Wallet, LogOut, History } from "lucide-react";
+import {
+  User,
+  Wallet,
+  LogOut,
+  History,
+  TrendingUp,
+  MessageSquare,
+} from "lucide-react";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -34,14 +41,11 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          <Link to="/dashboard" className="hover:text-primary">
-            Dashboard
-          </Link>
           <Link to="/about" className="hover:text-primary">
             About
           </Link>
-          <Link to="/wallet" className="hover:text-primary">
-            Wallet
+          <Link to="/dashboard" className="hover:text-primary">
+            Dashboard
           </Link>
         </div>
 
@@ -85,21 +89,38 @@ export default function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
-                    to="/history"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <History className="h-4 w-4 text-muted-foreground" />
-                    History
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link
                     to="/wallet"
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <Wallet className="h-4 w-4 text-muted-foreground" />
                     Wallet
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/trading"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    Trading
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/chat"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    AI Chat
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/history"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <History className="h-4 w-4 text-muted-foreground" />
+                    History
                   </Link>
                 </DropdownMenuItem>
 

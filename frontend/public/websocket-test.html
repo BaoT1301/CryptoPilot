@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebSocket Test</title>
+</head>
+
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="prices"></div>
+    <div id="log"></div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:4000', {
+            transports: ['websocket', 'polling']
+        });
+
+        const statusEl = document.getElementById('status');
+        const pricesEl = document.getElementById('prices');
+        const logEl = document.getElementById('log');
+
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            logEl.innerHTML += `<p>[${time}] ${msg}</p>`;
+            console.log(msg);
+        }
+
+        socket.on('connect', () => {
+            statusEl.innerHTML = '<span style="color: green;">✅ Connected</span>';
+            log('Connected to WebSocket server');
+        });
+
+        socket.on('disconnect', () => {
+            statusEl.innerHTML = '<span style="color: red;">❌ Disconnected</span>';
+            log('Disconnected from WebSocket server');
+        });
+
+        socket.on('priceUpdate', (prices) => {
+            log(`Price update received: ${JSON.stringify(prices)}`);
+            pricesEl.innerHTML = '<h2>Latest Prices:</h2><pre>' + JSON.stringify(prices, null, 2) + '</pre>';
+        });
+
+        socket.on('connect_error', (error) => {
+            statusEl.innerHTML = '<span style="color: red;">❌ Connection Error</span>';
+            log('Connection error: ' + error.message);
+        });
+    </script>
+</body>
+
+</html>

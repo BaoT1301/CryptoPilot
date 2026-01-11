@@ -5,7 +5,7 @@ import type { Deposit } from "@/types/wallet";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Copy, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion } from "framer-motion";
 import { useRef, useState } from "react";
 
@@ -16,7 +16,8 @@ function StatusBadge({ status }: { status: Deposit["status"] }) {
 }
 
 function StatusIcon({ status }: { status: Deposit["status"] }) {
-  if (status === "COMPLETED") return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+  if (status === "COMPLETED")
+    return <CheckCircle2 className="h-5 w-5 text-green-500" />;
   if (status === "FAILED") return <XCircle className="h-5 w-5 text-red-500" />;
   return <Loader2 className="h-5 w-5 animate-spin text-gray-500" />;
 }
@@ -54,12 +55,11 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
     return (
       <Card>
         <CardContent>
-        <Alert>
+          <Alert>
             <AlertDescription>
               Deposit or click history to view details
             </AlertDescription>
           </Alert>
-
         </CardContent>
       </Card>
     );
@@ -81,7 +81,8 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="space-y-4">
+          className="space-y-4"
+        >
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
@@ -101,8 +102,16 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
             <p className="text-xs text-muted-foreground">Deposit Address</p>
             <div className="mt-1 flex justify-between gap-2">
               <code className="break-all text-sm">{deposit.address}</code>
-              <Button size="sm" variant="secondary" onClick={() => copyToClipboard(deposit.address)}>
-                {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => copyToClipboard(deposit.address)}
+              >
+                {copied ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -110,17 +119,19 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
           <div className="rounded-2xl border p-3">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Confirmations</span>
-              <span>{confirmations} / {required}</span>
+              <span>
+                {confirmations} / {required}
+              </span>
             </div>
             <Progress value={progress} className="mt-2" />
             <p className="mt-2 text-xs text-muted-foreground">
               {deposit.status === "COMPLETED"
                 ? "Successfully Completed"
                 : confirmations > 0 && confirmations < required
-                  ? `Time Remaining: ~${Math.ceil(remainingSec / 60)} min`
-                  : hasTx
-                    ? `Time Remaining: ~${Math.ceil(remainingSec / 60)} min`
-                    : "waiting for transaction"}
+                ? `Time Remaining: ~${Math.ceil(remainingSec / 60)} min`
+                : hasTx
+                ? `Time Remaining: ~${Math.ceil(remainingSec / 60)} min`
+                : "waiting for transaction"}
             </p>
           </div>
 
@@ -131,7 +142,9 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
           <div className="rounded-2xl border p-3">
             <p className="text-xs text-muted-foreground">Transaction Hash</p>
             {deposit.txHash ? (
-                <p className="text-xs text-muted-foreground">{shortenHash(deposit.txHash, 12)}</p>
+              <p className="text-xs text-muted-foreground">
+                {shortenHash(deposit.txHash, 12)}
+              </p>
             ) : (
               <p className="text-sm text-muted-foreground">Not Generated Yet</p>
             )}

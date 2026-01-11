@@ -2,7 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
-import type { Deposit, DepositStatus, Withdraw, WithdrawStatus } from "@/types/wallet";
+import type {
+  Deposit,
+  DepositStatus,
+  Withdraw,
+  WithdrawStatus,
+} from "@/types/wallet";
 import {
   Pagination,
   PaginationContent,
@@ -11,23 +16,30 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-
 function StatusBadge({ status }: { status: string }) {
   if (status === "COMPLETED") {
     return <Badge className="rounded-full bg-green-500">Completed</Badge>;
   }
   if (status === "FAILED") {
-    return <Badge variant="destructive" className="rounded-full">Failed</Badge>;
+    return (
+      <Badge variant="destructive" className="rounded-full">
+        Failed
+      </Badge>
+    );
   }
-  return <Badge variant="secondary" className="rounded-full">Pending</Badge>;
+  return (
+    <Badge variant="secondary" className="rounded-full">
+      Pending
+    </Badge>
+  );
 }
 
 function StatusType({ type }: { type: string }) {
-  return <Badge variant="outline" className="rounded-full">
-
-    {type === 'deposit' ? 'Deposit' : 'Withdraw'}
-
-  </Badge>;
+  return (
+    <Badge variant="outline" className="rounded-full">
+      {type === "deposit" ? "Deposit" : "Withdraw"}
+    </Badge>
+  );
 }
 
 export function WalletOverview({
@@ -40,7 +52,7 @@ export function WalletOverview({
   onNext,
   onPrev,
   isLoading,
-  currentPage
+  currentPage,
 }: {
   deposits?: Deposit[];
   withdraw?: Withdraw[];
@@ -53,19 +65,26 @@ export function WalletOverview({
   isLoading?: boolean;
   currentPage: number;
 }) {
-
-  type DepositWithType = Deposit & { type: 'deposit' };
-  type WithdrawWithType = Withdraw & { type: 'withdraw' };
+  type DepositWithType = Deposit & { type: "deposit" };
+  type WithdrawWithType = Withdraw & { type: "withdraw" };
 
   type Transaction = DepositWithType | WithdrawWithType;
 
-  const depositsList: DepositWithType[] = Array.isArray(deposits) 
-  ? deposits.map(d => ({ ...d, type: 'deposit' as const, status: d.status as DepositStatus }))
-  : [];
+  const depositsList: DepositWithType[] = Array.isArray(deposits)
+    ? deposits.map((d) => ({
+        ...d,
+        type: "deposit" as const,
+        status: d.status as DepositStatus,
+      }))
+    : [];
 
-const withdrawList: WithdrawWithType[] = Array.isArray(withdraw)
-  ? withdraw.map(w => ({ ...w, type: 'withdraw' as const, status: w.status as WithdrawStatus }))
-  : [];
+  const withdrawList: WithdrawWithType[] = Array.isArray(withdraw)
+    ? withdraw.map((w) => ({
+        ...w,
+        type: "withdraw" as const,
+        status: w.status as WithdrawStatus,
+      }))
+    : [];
 
   const allTransactions: Transaction[] = [...depositsList, ...withdrawList];
 
@@ -97,7 +116,9 @@ const withdrawList: WithdrawWithType[] = Array.isArray(withdraw)
                 <Card key={a.symbol} className="rounded-2xl">
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">{a.symbol}</p>
-                    <p className="text-xl font-semibold">{balances[a.symbol]}</p>
+                    <p className="text-xl font-semibold">
+                      {Number(balances[a.symbol]).toFixed(8)}
+                    </p>
                     <p className="text-xs text-muted-foreground">{a.name}</p>
                   </CardContent>
                 </Card>
@@ -129,7 +150,9 @@ const withdrawList: WithdrawWithType[] = Array.isArray(withdraw)
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{d.asset}</span>
-                            <span className="text-xs text-muted-foreground">{d.network}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {d.network}
+                            </span>
                             <StatusType type={d.type} />
                             <StatusBadge status={d.status} />
                           </div>
@@ -137,7 +160,9 @@ const withdrawList: WithdrawWithType[] = Array.isArray(withdraw)
                             {new Date(d.createdAt).toLocaleString()}
                           </p>
                         </div>
-                        <span className="text-sm">{d.amount}</span>
+                        <span className="text-sm">
+                          {Number(d.amount).toFixed(8)}
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -155,7 +180,11 @@ const withdrawList: WithdrawWithType[] = Array.isArray(withdraw)
                         <PaginationPrevious
                           onClick={onPrev}
                           aria-disabled={!hasPrev}
-                          className={!hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          className={
+                            !hasPrev
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
                         />
                       </PaginationItem>
 
@@ -167,7 +196,11 @@ const withdrawList: WithdrawWithType[] = Array.isArray(withdraw)
                         <PaginationNext
                           onClick={onNext}
                           aria-disabled={!hasNext}
-                          className={!hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          className={
+                            !hasNext
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
                         />
                       </PaginationItem>
                     </PaginationContent>
