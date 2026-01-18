@@ -67,7 +67,7 @@ export function WithdrawCreateCard({
 
       <div className="space-y-2">
         <Label>Network</Label>
-        <Select value={networkKey} onValueChange={(v) => setNetworkKey(v as NetworkKey)}>
+        <Select value={networkKey} onValueChange={(v: string) => setNetworkKey(v as NetworkKey)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>

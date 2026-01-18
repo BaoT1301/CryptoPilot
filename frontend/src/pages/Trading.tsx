@@ -195,7 +195,7 @@ export default function Trading() {
                 <Label htmlFor="asset">Asset</Label>
                 <Select
                   value={selectedAsset}
-                  onValueChange={(value) => setSelectedAsset(value as Asset)}
+                  onValueChange={(value: string) => setSelectedAsset(value as Asset)}
                 >
                   <SelectTrigger id="asset">
                     <SelectValue />
