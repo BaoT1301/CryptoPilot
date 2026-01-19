@@ -68,9 +68,13 @@ RUN addgroup --system --gid 1001 nodejs && \
 ENV NODE_ENV=production
 
 # Copy built application from builder stage
-COPY --from=builder --chown=reactjs:nodejs /usr/src/app/dist ./dist
+# Copy built application from builder stage
+COPY --from=builder --chown=reactjs:nodejs /usr/src/app/dist ./dist/crypto-pilot
 COPY --from=builder --chown=reactjs:nodejs /usr/src/app/package.json ./
 COPY --from=builder --chown=reactjs:nodejs /usr/src/app/node_modules ./node_modules
+
+# Create serve.json for SPA rewrites
+RUN echo '{ "public": "dist", "rewrites": [ { "source": "/crypto-pilot/**", "destination": "/crypto-pilot/index.html" } ] }' > serve.json
 
 # Security: Switch to non-root user
 USER reactjs
@@ -82,4 +86,4 @@ EXPOSE 3000
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start production server
-CMD ["serve", "-s", "dist", "-l", "3000", "--single"]
+CMD ["serve", "-c", "serve.json", "-l", "3000"]
