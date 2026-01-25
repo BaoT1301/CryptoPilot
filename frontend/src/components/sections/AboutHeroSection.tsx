@@ -38,7 +38,7 @@ export default function AboutHeroSection() {
           transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{ textWrap: "balance" } as React.CSSProperties}
         >
-          About MyCoinBase
+          About Crypto Pilot
         </motion.h1>
         <motion.p
           className="text-lg text-muted-foreground leading-relaxed"

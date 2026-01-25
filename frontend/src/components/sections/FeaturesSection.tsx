@@ -76,7 +76,7 @@ export default function FeaturesSection() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{ textWrap: "balance" } as React.CSSProperties}
         >
-          Why Choose MyCoinBase?
+          Why Choose Crypto Pilot?
         </motion.h2>
 
         <motion.div

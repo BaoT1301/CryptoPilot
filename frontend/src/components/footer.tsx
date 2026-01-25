@@ -33,7 +33,7 @@ export default function Footer() {
                 <span className="text-primary-foreground font-bold">₿</span>
               </div>
               <span className="text-lg font-bold text-foreground">
-                MyCoinBase
+                Crypto Pilot
               </span>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -82,7 +82,7 @@ export default function Footer() {
 
         {/* Bottom Footer */}
         <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>&copy; 2025 MyCoinBase. All rights reserved.</p>
+          <p>&copy; 2025 Crypto Pilot. All rights reserved.</p>
           <p>
             Disclaimer: Cryptocurrency trading involves risk. Please do your own
             research before investing.

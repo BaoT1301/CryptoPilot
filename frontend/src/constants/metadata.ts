@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "MyCoinBase - Buy, Sell & Trade Crypto",
+  title: "Crypto Pilot - Buy, Sell & Trade Crypto",
   description:
     "The easiest way to buy, sell, and trade cryptocurrency with bank-level security.",
   generator: "v0.app",

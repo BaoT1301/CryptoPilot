@@ -36,7 +36,9 @@ export default function Header() {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">₿</span>
           </div>
-          <span className="text-xl font-bold text-foreground">MyCoinBase</span>
+          <span className="text-xl font-bold text-foreground">
+            Crypto Pilot
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
