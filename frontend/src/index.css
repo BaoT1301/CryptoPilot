@@ -123,4 +123,169 @@
   body {
     @apply bg-background text-foreground;
   }
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* Custom Animations - Compositor-friendly (transform/opacity only) */
+@keyframes gradient-shift {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+    opacity: 0.8;
+  }
+  33% {
+    transform: translate(30%, -30%) scale(1.1);
+    opacity: 0.6;
+  }
+  66% {
+    transform: translate(-20%, 20%) scale(0.9);
+    opacity: 0.7;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-20px);
+    opacity: 0.8;
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Reduced motion fallbacks */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes gradient-shift {
+    0%,
+    100% {
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      opacity: 0.6;
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes bounce-slow {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Utility Classes */
+@layer utilities {
+  .animate-gradient {
+    animation: gradient-shift 15s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce-slow 2s ease-in-out infinite;
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition-property: transform, box-shadow, border-color;
+    transition-duration: 300ms;
+    transition-timing-function: ease-out;
+  }
+
+  .glass-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(var(--primary), 0.3);
+  }
+
+  .glow-primary-strong {
+    box-shadow:
+      0 0 30px rgba(var(--primary), 0.5),
+      0 0 60px rgba(var(--primary), 0.2);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px currentColor;
+  }
+
+  .gradient-mesh {
+    background:
+      radial-gradient(
+        at 0% 0%,
+        oklch(0.45 0.22 262 / 0.2) 0px,
+        transparent 50%
+      ),
+      radial-gradient(
+        at 100% 0%,
+        oklch(0.6 0.18 260 / 0.15) 0px,
+        transparent 50%
+      ),
+      radial-gradient(
+        at 100% 100%,
+        oklch(0.5 0.15 240 / 0.2) 0px,
+        transparent 50%
+      ),
+      radial-gradient(
+        at 0% 100%,
+        oklch(0.55 0.16 265 / 0.15) 0px,
+        transparent 50%
+      );
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
 }
