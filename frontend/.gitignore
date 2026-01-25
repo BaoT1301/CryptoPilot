@@ -24,3 +24,10 @@ dist-ssr
 *.sw?
 bun.lockb
 .env
+
+.agent/
+.agents/
+.claude/
+.codex/
+.cursor/
+.gemini/
