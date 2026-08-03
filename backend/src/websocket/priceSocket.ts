@@ -13,7 +13,11 @@ import { checkLimitOrders } from "../modules/order/order.matching";
 
 dotenv.config();
 
-const FRONTEND_URL = process.env.FRONTEND_URL!;
+/** Same comma-separated list the Express CORS layer uses. */
+const ALLOWED_ORIGINS = (process.env.FRONTEND_URL ?? "")
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .filter(Boolean);
 const BINANCE_WS =
   process.env.BINANCE_WS ||
   "wss://stream.binance.us:9443/stream?streams=btcusdt@ticker/ethusdt@ticker/bnbusdt@ticker/solusdt@ticker";
@@ -118,12 +122,12 @@ export function setupPriceSocket(server: HTTPServer) {
   if (ioInitialized) return io;
 
   io = new SocketIOServer(server, {
-    cors: { origin: FRONTEND_URL || "*", credentials: true },
+    cors: { origin: ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS : "*", credentials: true },
   });
   ioInitialized = true;
 
   console.log("[BE] WebSocket server started");
-  console.log(`[BE] CORS allowed origin: ${FRONTEND_URL || "*"}`);
+  console.log(`[BE] CORS allowed origins: ${ALLOWED_ORIGINS.join(", ") || "*"}`);
 
   io.on("connection", (socket) => {
     // Send a snapshot immediately so a new tab isn't blank until the next tick.

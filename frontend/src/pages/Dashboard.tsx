@@ -1,6 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   LineChart,
   Line,
@@ -18,7 +15,8 @@ import { getOrders } from "@/api/order";
 import { getPortfolio, type PortfolioAsset } from "@/api/portfolio";
 import type { Order } from "@/types/order";
 import { Link } from "react-router-dom";
-import { TrendingUp, ArrowRight, Maximize2, Minimize2 } from "lucide-react";
+import { ArrowUpRight } from "@phosphor-icons/react";
+import { ASSETS, formatPrice } from "@/components/landing/useLiveMarket";
 
 export default function Dashboard() {
   const [isConnected, setIsConnected] = useState(false);
@@ -180,383 +178,288 @@ export default function Dashboard() {
     value: asset.value,
   }));
 
-  if (!isConnected && priceChartData.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-pulse">
-            <p className="text-lg font-semibold">Connecting to live market…</p>
-            <p className="text-sm mt-2">
-              Please ensure the backend server is running
-            </p>
-            <p className="text-xs mt-1 text-muted-foreground">
-              {SOCKET_URL}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // The old gate blocked the whole page on `!isConnected` with no timeout, so a
+  // backend outage trapped the user on a pulsing message forever. The page now
+  // always renders and each region states its own condition.
+  const totalValue = cryptos.reduce((sum, c) => sum + Number(c.value || 0), 0);
+  const assetMeta = Object.fromEntries(ASSETS.map((a) => [a.key, a]));
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Page Title */}
-        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-gray-500 mb-8">Welcome back!</p>
-        {/* Price Chart */}
-        <Card className="mb-8 hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <CardTitle className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <span>Live Price Chart - {selectedCoin}</span>
-                <div className="flex items-center gap-3">
-                  {isConnected ? (
-                    <span className="text-xs text-green-600 flex items-center gap-1">
-                      <span className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></span>
-                      Live
-                    </span>
-                  ) : (
-                    <span className="text-xs text-red-600">Disconnected</span>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsFullscreen(!isFullscreen)}
-                    className="h-8 w-8 p-0"
-                  >
-                    {isFullscreen ? (
-                      <Minimize2 className="h-4 w-4" />
-                    ) : (
-                      <Maximize2 className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
+    <main className="mx-auto w-full max-w-[1400px] px-6 py-10 md:px-10 md:py-14">
+      {/* Readout. The portfolio total is the one number that matters, so it is
+          set at display scale in mono and everything else defers to it. */}
+      <header className="flex flex-wrap items-end justify-between gap-6 border-b border-border pb-8">
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            Portfolio value
+          </p>
+          <p className="mt-2 font-mono text-[clamp(2.25rem,5vw,3.5rem)] leading-none tracking-[-0.03em] tabular-nums text-foreground">
+            ${totalValue.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
+        </div>
 
-              {/* Coin Selector */}
-              <div className="flex gap-2">
-                <Button
-                  variant={selectedCoin === "BTC" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCoin("BTC")}
-                  className="font-semibold"
-                >
-                  <span
-                    className="mr-2"
-                    style={{ color: selectedCoin === "BTC" ? "" : "#F7931A" }}
-                  >
-                    ●
-                  </span>
-                  BTC
-                </Button>
-                <Button
-                  variant={selectedCoin === "ETH" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCoin("ETH")}
-                  className="font-semibold"
-                >
-                  <span
-                    className="mr-2"
-                    style={{ color: selectedCoin === "ETH" ? "" : "#162975ff" }}
-                  >
-                    ●
-                  </span>
-                  ETH
-                </Button>
-                <Button
-                  variant={selectedCoin === "SOL" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCoin("SOL")}
-                  className="font-semibold"
-                >
-                  <span
-                    className="mr-2"
-                    style={{ color: selectedCoin === "SOL" ? "" : "#167b51ff" }}
-                  >
-                    ●
-                  </span>
-                  SOL
-                </Button>
-                <Button
-                  variant={selectedCoin === "BNB" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCoin("BNB")}
-                  className="font-semibold"
-                >
-                  <span
-                    className="mr-2"
-                    style={{ color: selectedCoin === "BNB" ? "" : "#F3BA2F" }}
-                  >
-                    ●
-                  </span>
-                  BNB
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {priceChartData.length === 0 ? (
-              <div
-                className={`flex items-center justify-center text-muted-foreground ${
-                  isFullscreen ? "h-[calc(100vh-200px)]" : "h-[300px]"
-                }`}
+        <div className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className={
+              isConnected
+                ? "h-1.5 w-1.5 rounded-full bg-[var(--market-up)]"
+                : "h-1.5 w-1.5 rounded-full bg-muted-foreground/40"
+            }
+          />
+          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            {isConnected ? "streaming" : "reconnecting"}
+          </span>
+        </div>
+      </header>
+
+      {/* Chart */}
+      <section className="border-b border-border py-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h2 className="text-lg font-normal tracking-[-0.02em] text-foreground">
+            Relative performance
+          </h2>
+
+          {/* One segmented control rather than four pill buttons: this filters
+              a single view, it is not four separate actions. */}
+          <div className="flex flex-wrap gap-1 rounded-full border border-border p-1">
+            {ASSETS.map((asset) => (
+              <button
+                key={asset.key}
+                onClick={() => setSelectedCoin(asset.key)}
+                className={
+                  selectedCoin === asset.key
+                    ? "flex items-center gap-2 rounded-full bg-primary px-3.5 py-1.5 font-mono text-xs text-primary-foreground transition-colors"
+                    : "flex items-center gap-2 rounded-full px-3.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-secondary"
+                }
               >
-                <div className="text-center space-y-2">
-                  <p>Waiting for price data...</p>
-                  <p className="text-xs">
-                    The chart will appear once prices are received
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <ResponsiveContainer
-                width="100%"
-                height={isFullscreen ? 800 : 500}
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: asset.color }}
+                />
+                {asset.key}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-8">
+          {priceChartData.length === 0 ? (
+            // Same height as the chart so nothing shifts when data lands.
+            <div className="flex h-[360px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border">
+              <p className="text-sm text-muted-foreground">
+                Waiting for the first prices
+              </p>
+              <p className="font-mono text-[11px] text-muted-foreground/70">
+                {isConnected
+                  ? "connected, no ticks yet"
+                  : "connecting to the feed"}
+              </p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={360}>
+              <LineChart data={priceChartData}>
+                <CartesianGrid
+                  strokeDasharray="2 4"
+                  stroke="currentColor"
+                  strokeOpacity={0.12}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  stroke="currentColor"
+                  strokeOpacity={0.2}
+                  tickLine={false}
+                  minTickGap={40}
+                />
+                <YAxis
+                  domain={["auto", "auto"]}
+                  tick={{ fontSize: 11 }}
+                  stroke="currentColor"
+                  strokeOpacity={0.2}
+                  tickLine={false}
+                  axisLine={false}
+                  width={44}
+                  tickFormatter={(v: number) => v.toFixed(1)}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "12px",
+                    fontSize: 12,
+                    color: "var(--foreground)",
+                  }}
+                  labelStyle={{ color: "var(--muted-foreground)" }}
+                  formatter={(value, name) => {
+                    const n = typeof value === "number" ? value : Number(value);
+                    if (!Number.isFinite(n)) return ["", ""];
+                    const delta = n - 100;
+                    const sign = delta >= 0 ? "+" : "";
+                    return [
+                      n.toFixed(2) + " (" + sign + delta.toFixed(2) + "%)",
+                      String(name),
+                    ];
+                  }}
+                />
+                {ASSETS.map((asset) => (
+                  <Line
+                    key={asset.key}
+                    type="monotone"
+                    dataKey={asset.key}
+                    stroke={asset.color}
+                    strokeWidth={selectedCoin === asset.key ? 2 : 1.25}
+                    dot={false}
+                    isAnimationActive={false}
+                    // Unselected series stay as faint context rather than
+                    // vanishing, so the comparison is still readable.
+                    opacity={selectedCoin === asset.key ? 1 : 0.22}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+          <p className="mt-3 font-mono text-[11px] text-muted-foreground">
+            Indexed to 100 at the first tick of this session.
+          </p>
+        </div>
+      </section>
+
+      {/* Ledger */}
+      <section className="grid gap-x-14 gap-y-12 py-8 lg:grid-cols-2">
+        <div>
+          <h2 className="text-lg font-normal tracking-[-0.02em] text-foreground">
+            Holdings
+          </h2>
+
+          {cryptos.length === 0 ? (
+            // Previously there was no empty state at all: an empty portfolio
+            // rendered a heading above a zero-height body.
+            <div className="mt-6 rounded-xl border border-dashed border-border p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                You do not hold anything yet.
+              </p>
+              <Link
+                to="/trading"
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-[1px] active:scale-[0.98]"
               >
-                <LineChart
-                  data={priceChartData.map((point) => {
-                    if (!baselinePrices)
-                      return {
-                        date: point.date,
-                        BTC: 100,
-                        ETH: 100,
-                        SOL: 100,
-                        BNB: 100,
-                      };
-                    // Normalize each coin to base 100
-                    return {
-                      date: point.date,
-                      BTC: (point.BTC / baselinePrices.BTC) * 100,
-                      ETH: (point.ETH / baselinePrices.ETH) * 100,
-                      SOL: (point.SOL / baselinePrices.SOL) * 100,
-                      BNB: (point.BNB / baselinePrices.BNB) * 100,
-                    };
-                  })}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 10 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis
-                    domain={["auto", "auto"]}
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => value.toFixed(2)}
-                    label={{
-                      value: "Index (Base = 100)",
-                      angle: -90,
-                      position: "insideLeft",
-                      style: { fontSize: 12 },
-                    }}
-                    width={60}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "rgba(0, 0, 0, 0.8)",
-                      border: "none",
-                      borderRadius: "8px",
-                      color: "white",
-                    }}
-                    formatter={(value, name) => {
-                      // Recharts types `value` as number | string | array, and has
-                      // tightened this signature across 3.x releases. Narrow it
-                      // here rather than annotating the params, so the component
-                      // keeps compiling across recharts versions.
-                      const numericValue =
-                        typeof value === "number" ? value : Number(value);
-                      const seriesName = typeof name === "string" ? name : "";
-                      if (!Number.isFinite(numericValue) || !seriesName) {
-                        return ["", ""];
-                      }
-                      const coinSymbol = seriesName as
-                        | "BTC"
-                        | "ETH"
-                        | "SOL"
-                        | "BNB";
-                      const currentPrice = livePrices[coinSymbol];
-                      const percentChange = (numericValue - 100).toFixed(3);
-                      return [
-                        `Index: ${numericValue.toFixed(3)} (${
-                          percentChange >= "0" ? "+" : ""
-                        }${percentChange}%) | Price: $${currentPrice?.toLocaleString() ?? "—"}`,
-                        seriesName,
-                      ];
-                    }}
-                  />
-                  <Legend />
-
-                  <Line
-                    type="monotone"
-                    dataKey="BTC"
-                    stroke="#F7931A"
-                    strokeWidth={3}
-                    dot={false}
-                    isAnimationActive={false}
-                    opacity={selectedCoin === "BTC" ? 1 : 0.15}
-                  />
-
-                  <Line
-                    type="monotone"
-                    dataKey="ETH"
-                    stroke="#162975ff"
-                    strokeWidth={3}
-                    dot={false}
-                    isAnimationActive={false}
-                    opacity={selectedCoin === "ETH" ? 1 : 0.15}
-                  />
-
-                  <Line
-                    type="monotone"
-                    dataKey="SOL"
-                    stroke="#167b51ff"
-                    strokeWidth={3}
-                    dot={false}
-                    isAnimationActive={false}
-                    opacity={selectedCoin === "SOL" ? 1 : 0.15}
-                  />
-
-                  <Line
-                    type="monotone"
-                    dataKey="BNB"
-                    stroke="#F3BA2F"
-                    strokeWidth={3}
-                    dot={false}
-                    isAnimationActive={false}
-                    opacity={selectedCoin === "BNB" ? 1 : 0.15}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              Showing last {priceChartData.length} updates
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Two Column Layout: Holdings + Recent Orders */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Holdings List */}
-          <Card className="hover:shadow-lg transition-shadow duration-300">
-            <CardHeader>
-              <CardTitle>Your Holdings</CardTitle>
-            </CardHeader>
-            <CardContent>
+                Place your first order
+                <ArrowUpRight size={15} weight="bold" />
+              </Link>
+            </div>
+          ) : (
+            <ul className="mt-6">
               {cryptos.map((crypto) => {
-                const isPositive = crypto.change >= 0;
-                const isSelected = selectedCoin === crypto.symbol;
-
+                const meta = assetMeta[crypto.symbol];
+                const change = Number(crypto.change ?? 0);
+                const changeClass =
+                  change > 0
+                    ? "text-up"
+                    : change < 0
+                      ? "text-down"
+                      : "text-muted-foreground";
                 return (
-                  <div
+                  <li
                     key={crypto.id}
                     onClick={() => setSelectedCoin(crypto.symbol)}
-                    className={`flex justify-between items-center p-4 rounded transition-colors duration-200 cursor-pointer ${
-                      isSelected
-                        ? "bg-gray-200 dark:bg-gray-800 border-l-4 border-primary"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                    }`}
+                    className={
+                      "flex cursor-pointer items-center justify-between border-b border-border py-4 transition-colors hover:bg-secondary/60 " +
+                      (selectedCoin === crypto.symbol ? "bg-secondary/40" : "")
+                    }
                   >
-                    <div>
-                      <p className="font-bold">{crypto.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {Number(crypto.holdings).toFixed(8)} {crypto.symbol}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">
-                        $
-                        {Number(crypto.price).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </p>
-                      <p
-                        className={`text-sm ${
-                          isPositive ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
-                        {isPositive ? "+" : ""}
-                        {crypto.change}%
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+                    <span className="flex items-center gap-3">
+                      <span
+                        aria-hidden
+                        className="h-2 w-2 rounded-full"
+                        style={{
+                          backgroundColor:
+                            meta?.color ?? "var(--muted-foreground)",
+                        }}
+                      />
+                      <span className="font-mono text-sm font-medium text-foreground">
+                        {crypto.symbol}
+                      </span>
+                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                        {Number(crypto.holdings ?? 0).toFixed(6)}
+                      </span>
+                    </span>
 
-          {/* Recent Orders */}
-          <Card className="hover:shadow-lg transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Recent Orders</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/trading">
-                  View All <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {recentOrders.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No orders yet</p>
-                  <Button asChild>
-                    <Link to="/trading">
-                      <TrendingUp className="mr-2 h-4 w-4" />
-                      Start Trading
-                    </Link>
-                  </Button>
-                </div>
-              ) : (
-                recentOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="flex justify-between items-center p-4 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors duration-200"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            order.side === "buy" ? "default" : "destructive"
-                          }
-                        >
-                          {order.side.toUpperCase()}
-                        </Badge>
-                        <span className="font-bold">{order.asset}</span>
-                        <span className="text-sm text-gray-500">
-                          {order.type.toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {new Date(order.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">
-                        {order.originalAmount} {order.asset}
-                      </p>
-                      <Badge
-                        variant={
-                          order.status === "filled"
-                            ? "default"
-                            : order.status === "cancelled"
-                            ? "destructive"
-                            : "secondary"
+                    <span className="flex items-baseline gap-4">
+                      <span className="font-mono text-sm tabular-nums text-foreground">
+                        ${formatPrice(Number(crypto.price ?? 0))}
+                      </span>
+                      <span
+                        className={
+                          "w-16 text-right font-mono text-xs tabular-nums " +
+                          changeClass
                         }
                       >
-                        {order.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
+                        {change > 0 ? "+" : ""}
+                        {change.toFixed(2)}%
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
-      </div>
-    </div>
+
+        <div>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-normal tracking-[-0.02em] text-foreground">
+              Recent orders
+            </h2>
+            <Link
+              to="/history"
+              className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              View all
+            </Link>
+          </div>
+
+          {recentOrders.length === 0 ? (
+            <div className="mt-6 rounded-xl border border-dashed border-border p-8 text-center">
+              <p className="text-sm text-muted-foreground">No orders yet.</p>
+            </div>
+          ) : (
+            <ul className="mt-6">
+              {recentOrders.map((order) => (
+                <li
+                  key={order._id}
+                  className="flex items-center justify-between gap-4 border-b border-border py-4"
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span
+                      className={
+                        "font-mono text-[11px] uppercase tracking-[0.12em] " +
+                        (order.side === "buy" ? "text-up" : "text-down")
+                      }
+                    >
+                      {order.side}
+                    </span>
+                    <span className="font-mono text-sm text-foreground">
+                      {order.asset}
+                    </span>
+                    <span className="truncate font-mono text-xs tabular-nums text-muted-foreground">
+                      {Number(order.originalAmount ?? 0).toFixed(6)}
+                    </span>
+                  </span>
+
+                  <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                    {String(order.status).replace("_", " ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+    </main>
   );
 }

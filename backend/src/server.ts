@@ -26,7 +26,31 @@ const server = http.createServer(app);
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+/**
+ * FRONTEND_URL accepts a comma-separated list so a local dev server can talk to
+ * the deployed API. With a single hardcoded origin, `fetch` from localhost was
+ * blocked while websockets still connected (the WS transport does not enforce
+ * CORS the same way), which made local development look half-working: live
+ * prices arrived but every authenticated request failed with "Failed to fetch".
+ */
+export const ALLOWED_ORIGINS = (process.env.FRONTEND_URL ?? "")
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Same-origin and non-browser callers (curl, health checks) send no Origin.
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ""))) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+    },
+    credentials: true,
+  })
+);
 
 // Public routes
 app.post("/api/auth/register", SignUp);
