@@ -1,26 +1,7 @@
 import { useState, useEffect } from "react";
 import { SOCKET_URL } from "@/lib/config";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { io } from "socket.io-client";
 import { createOrder, getOrders, cancelOrder, getOrderBook } from "@/api/order";
 import type {
@@ -32,7 +13,7 @@ import type {
 } from "@/types/order";
 import { useAuth } from "@/lib/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { ASSETS, formatPrice } from "@/components/landing/useLiveMarket";
 
 export default function Trading() {
   const { authenticated } = useAuth();
@@ -172,81 +153,139 @@ export default function Trading() {
       ? parseFloat(amount || "0") * currentPrice
       : parseFloat(amount || "0") * parseFloat(limitPrice || "0");
 
+  const assetMeta = Object.fromEntries(ASSETS.map((a) => [a.key, a]));
+  const activeAsset = assetMeta[selectedAsset];
+
+  // Depth bars are drawn proportional to the largest resting size on either
+  // side, so the two halves of the book share one scale and can be compared.
+  const asks = orderBook?.asks?.slice(0, 8) ?? [];
+  const bids = orderBook?.bids?.slice(0, 8) ?? [];
+  const maxSize = Math.max(
+    1e-9,
+    ...asks.map((a) => Number(a.remainingAmount) || 0),
+    ...bids.map((b) => Number(b.remainingAmount) || 0)
+  );
+
+  const openOrders = myOrders.filter(
+    (o) => o.status === "open" || o.status === "partially_filled"
+  );
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Trading</h1>
-        <p className="text-muted-foreground">
-          Execute market and limit orders in real-time
-        </p>
-      </div>
+    <main className="mx-auto w-full max-w-[1600px] px-6 py-8 md:px-10">
+      {/* Feedback is fixed rather than living in the ticket column. Cancelling
+          an order from the right-hand column used to render its confirmation
+          in the left-hand column, potentially off-screen. */}
+      {(error || success) && (
+        <div
+          role="status"
+          className={
+            "fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-full border px-5 py-2.5 text-sm shadow-sm " +
+            (error
+              ? "border-destructive/30 bg-destructive/10 text-destructive"
+              : "border-[color-mix(in_oklch,var(--market-up)_30%,transparent)] bg-[color-mix(in_oklch,var(--market-up)_12%,transparent)] text-[var(--market-up)]")
+          }
+        >
+          {error || success}
+        </div>
+      )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Order Form */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Place Order</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmitOrder} className="space-y-4">
-              {/* Asset Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="asset">Asset</Label>
-                <Select
-                  value={selectedAsset}
-                  onValueChange={(value: string) => setSelectedAsset(value as Asset)}
+      {/* Instrument bar */}
+      <header className="flex flex-wrap items-end justify-between gap-6 border-b border-border pb-6">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <span
+              aria-hidden
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: activeAsset?.color }}
+            />
+            <span className="font-mono text-sm font-medium text-foreground">
+              {selectedAsset}
+              <span className="text-muted-foreground">/USDT</span>
+            </span>
+          </div>
+          <p className="mt-2 font-mono text-[clamp(1.9rem,4vw,2.75rem)] leading-none tracking-[-0.03em] tabular-nums text-foreground">
+            {currentPrice > 0 ? "$" + formatPrice(currentPrice) : "----"}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-1 rounded-full border border-border p-1">
+          {ASSETS.map((asset) => (
+            <button
+              key={asset.key}
+              onClick={() => setSelectedAsset(asset.key as typeof selectedAsset)}
+              className={
+                selectedAsset === asset.key
+                  ? "flex items-center gap-2 rounded-full bg-primary px-3.5 py-1.5 font-mono text-xs text-primary-foreground"
+                  : "flex items-center gap-2 rounded-full px-3.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-secondary"
+              }
+            >
+              <span
+                aria-hidden
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: asset.color }}
+              />
+              {asset.key}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* Three working columns. The old layout jumped straight from one column
+          to three, so every tablet width got a single very tall column. */}
+      <div className="grid gap-10 pt-8 md:grid-cols-2 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(0,380px)]">
+        {/* Ticket */}
+        <section>
+          <h2 className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            New order
+          </h2>
+
+          <form onSubmit={handleSubmitOrder} className="mt-5 space-y-5">
+            <div className="grid grid-cols-2 gap-1 rounded-full border border-border p-1">
+              {(["buy", "sell"] as const).map((side) => (
+                <button
+                  key={side}
+                  type="button"
+                  onClick={() => setOrderSide(side)}
+                  className={
+                    "rounded-full py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors " +
+                    (orderSide === side
+                      ? side === "buy"
+                        ? "bg-[var(--market-up)] text-white"
+                        : "bg-[var(--market-down)] text-white"
+                      : "text-muted-foreground hover:bg-secondary")
+                  }
                 >
-                  <SelectTrigger id="asset">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                    <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-                    <SelectItem value="SOL">Solana (SOL)</SelectItem>
-                    <SelectItem value="BNB">BNB (BNB)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="text-sm text-muted-foreground">
-                  Current Price: ${currentPrice.toLocaleString()}
-                </div>
-              </div>
+                  {side}
+                </button>
+              ))}
+            </div>
 
-              {/* Order Type Tabs */}
-              <Tabs
-                value={orderType}
-                onValueChange={(value) => setOrderType(value as OrderType)}
+            <div className="grid grid-cols-2 gap-1 rounded-full border border-border p-1">
+              {(["market", "limit"] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setOrderType(type)}
+                  className={
+                    "rounded-full py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors " +
+                    (orderType === type
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:bg-secondary/60")
+                  }
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="amount"
+                className="block text-sm font-medium text-foreground"
               >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="market">Market</TabsTrigger>
-                  <TabsTrigger value="limit">Limit</TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              {/* Buy/Sell Toggle */}
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={orderSide === "buy" ? "default" : "outline"}
-                  className="flex-1"
-                  onClick={() => setOrderSide("buy")}
-                >
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Buy
-                </Button>
-                <Button
-                  type="button"
-                  variant={orderSide === "sell" ? "destructive" : "outline"}
-                  className="flex-1"
-                  onClick={() => setOrderSide("sell")}
-                >
-                  <TrendingDown className="mr-2 h-4 w-4" />
-                  Sell
-                </Button>
-              </div>
-
-              {/* Amount Input */}
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount ({selectedAsset})</Label>
+                Amount
+              </label>
+              <div className="relative">
                 <Input
                   id="amount"
                   type="number"
@@ -254,15 +293,25 @@ export default function Trading() {
                   min="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
+                  placeholder="0.00000000"
+                  className="pr-16 font-mono tabular-nums"
                   required
                 />
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-mono text-xs text-muted-foreground">
+                  {selectedAsset}
+                </span>
               </div>
+            </div>
 
-              {/* Limit Price (only for limit orders) */}
-              {orderType === "limit" && (
-                <div className="space-y-2">
-                  <Label htmlFor="limitPrice">Limit Price (USD)</Label>
+            {orderType === "limit" && (
+              <div className="space-y-2">
+                <label
+                  htmlFor="limitPrice"
+                  className="block text-sm font-medium text-foreground"
+                >
+                  Limit price
+                </label>
+                <div className="relative">
                   <Input
                     id="limitPrice"
                     type="number"
@@ -271,306 +320,226 @@ export default function Trading() {
                     value={limitPrice}
                     onChange={(e) => setLimitPrice(e.target.value)}
                     placeholder="0.00"
+                    className="pr-16 font-mono tabular-nums"
                     required
                   />
-                </div>
-              )}
-
-              {/* Estimated Total */}
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Estimated Total:
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-mono text-xs text-muted-foreground">
+                    USDT
                   </span>
-                  <span className="font-semibold">
-                    $
-                    {estimatedTotal.toLocaleString(undefined, {
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-baseline justify-between border-t border-border pt-4">
+              <span className="text-sm text-muted-foreground">Estimated total</span>
+              <span className="font-mono text-sm tabular-nums text-foreground">
+                {Number.isFinite(estimatedTotal) && estimatedTotal > 0
+                  ? "$" +
+                    estimatedTotal.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    })}
+                    })
+                  : "-"}
+              </span>
+            </div>
+
+            <Button
+              type="submit"
+              size="lg"
+              disabled={loading}
+              className={
+                "w-full " +
+                (orderSide === "buy"
+                  ? "bg-[var(--market-up)] text-white hover:bg-[var(--market-up)]/90"
+                  : "bg-[var(--market-down)] text-white hover:bg-[var(--market-down)]/90")
+              }
+            >
+              {loading
+                ? "Placing"
+                : (orderSide === "buy" ? "Buy " : "Sell ") + selectedAsset}
+            </Button>
+          </form>
+        </section>
+
+        {/* Book */}
+        <section>
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              Order book
+            </h2>
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              size
+            </span>
+          </div>
+
+          {/* Asks, worst price at the top so the best sits against the spread,
+              which is the conventional reading order for a book. */}
+          <ul className="mt-5">
+            {asks.length === 0 ? (
+              <li className="py-3 text-sm text-muted-foreground">
+                No sell orders resting.
+              </li>
+            ) : (
+              [...asks].reverse().map((ask, i) => (
+                <li key={i} className="relative py-1.5">
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0 right-0 rounded-sm bg-[color-mix(in_oklch,var(--market-down)_16%,transparent)]"
+                    style={{
+                      width:
+                        ((Number(ask.remainingAmount) || 0) / maxSize) * 100 + "%",
+                    }}
+                  />
+                  <span className="relative flex items-center justify-between px-2 font-mono text-sm tabular-nums">
+                    <span className="text-down">
+                      {Number(ask.price).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {Number(ask.remainingAmount).toFixed(6)}
+                    </span>
                   </span>
-                </div>
-              </div>
+                </li>
+              ))
+            )}
+          </ul>
 
-              {/* Error/Success Messages */}
-              {error && (
-                <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-lg">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="p-3 text-sm text-green-600 bg-green-50 dark:bg-green-950 rounded-lg">
-                  {success}
-                </div>
-              )}
+          <div className="my-3 flex items-baseline justify-between border-y border-border py-3 px-2">
+            <span className="font-mono text-lg tabular-nums text-foreground">
+              {currentPrice > 0 ? "$" + formatPrice(currentPrice) : "----"}
+            </span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              last
+            </span>
+          </div>
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-                variant={orderSide === "buy" ? "default" : "destructive"}
-              >
-                {loading ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  `${orderSide === "buy" ? "Buy" : "Sell"} ${selectedAsset}`
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+          <ul>
+            {bids.length === 0 ? (
+              <li className="py-3 text-sm text-muted-foreground">
+                No buy orders resting.
+              </li>
+            ) : (
+              bids.map((bid, i) => (
+                <li key={i} className="relative py-1.5">
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0 right-0 rounded-sm bg-[color-mix(in_oklch,var(--market-up)_16%,transparent)]"
+                    style={{
+                      width:
+                        ((Number(bid.remainingAmount) || 0) / maxSize) * 100 + "%",
+                    }}
+                  />
+                  <span className="relative flex items-center justify-between px-2 font-mono text-sm tabular-nums">
+                    <span className="text-up">
+                      {Number(bid.price).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {Number(bid.remainingAmount).toFixed(6)}
+                    </span>
+                  </span>
+                </li>
+              ))
+            )}
+          </ul>
+        </section>
 
-        {/* Order Book */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Order Book - {selectedAsset}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Asks (Sell Orders) */}
-              <div>
-                <h3 className="text-sm font-semibold mb-2 text-destructive">
-                  Asks (Sell)
-                </h3>
-                <div className="space-y-1">
-                  {orderBook?.asks?.length ? (
-                    orderBook.asks.slice(0, 10).map((ask, idx) => (
-                      <div
-                        key={idx}
-                        className="flex justify-between text-sm p-2 bg-destructive/5 rounded"
-                      >
-                        <span className="text-destructive font-mono">
-                          ${ask.price.toLocaleString()}
+        {/* Orders. Previously this list was rendered twice on the same screen,
+            once as cards and again as an eight column table. */}
+        <section className="md:col-span-2 lg:col-span-1">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              Your orders
+            </h2>
+            <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+              {openOrders.length} open
+            </span>
+          </div>
+
+          {myOrders.length === 0 ? (
+            <p className="mt-5 rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              Nothing placed yet.
+            </p>
+          ) : (
+            <ul className="mt-5">
+              {myOrders.slice(0, 12).map((order) => {
+                const filled = Number(order.filledAmount) || 0;
+                const total = Number(order.originalAmount) || 0;
+                const pct = total > 0 ? (filled / total) * 100 : 0;
+                const cancellable =
+                  order.status === "open" || order.status === "partially_filled";
+                return (
+                  <li key={order._id} className="border-b border-border py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-2.5">
+                        <span
+                          className={
+                            "font-mono text-[11px] uppercase tracking-[0.12em] " +
+                            (order.side === "buy" ? "text-up" : "text-down")
+                          }
+                        >
+                          {order.side}
                         </span>
-                        <span className="text-muted-foreground">
-                          {ask.remainingAmount.toFixed(8)}
+                        <span className="font-mono text-sm text-foreground">
+                          {order.asset}
                         </span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No sell orders
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Current Price Divider */}
-              <div className="py-2 text-center border-y">
-                <div className="text-2xl font-bold">
-                  ${currentPrice.toLocaleString()}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Current Market Price
-                </div>
-              </div>
-
-              {/* Bids (Buy Orders) */}
-              <div>
-                <h3 className="text-sm font-semibold mb-2 text-green-600">
-                  Bids (Buy)
-                </h3>
-                <div className="space-y-1">
-                  {orderBook?.bids?.length ? (
-                    orderBook.bids.slice(0, 10).map((bid, idx) => (
-                      <div
-                        key={idx}
-                        className="flex justify-between text-sm p-2 bg-green-500/5 rounded"
-                      >
-                        <span className="text-green-600 font-mono">
-                          ${bid.price.toLocaleString()}
+                        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                          {order.type}
                         </span>
-                        <span className="text-muted-foreground">
-                          {bid.remainingAmount.toFixed(8)}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No buy orders
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                      </span>
 
-        {/* My Orders */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>My Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-[600px] overflow-y-auto">
-              {myOrders.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  No orders yet
-                </p>
-              ) : (
-                myOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="p-3 border rounded-lg space-y-2"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-semibold">
-                          {order.side.toUpperCase()} {order.asset}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {order.type.toUpperCase()} Order
-                        </div>
-                      </div>
-                      <Badge
-                        variant={
-                          order.status === "filled"
-                            ? "default"
-                            : order.status === "cancelled"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                      >
-                        {order.status}
-                      </Badge>
+                      <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {String(order.status).replace("_", " ")}
+                      </span>
                     </div>
-                    <div className="text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span>{Number(order.amount).toFixed(8)}</span>
-                      </div>
-                      {order.limitPrice && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Limit Price:
-                          </span>
-                          <span>${order.limitPrice}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Filled:</span>
-                        <span>
-                          {Number(order.filledAmount).toFixed(8)} /{" "}
-                          {Number(order.amount).toFixed(8)}
+
+                    <div className="mt-2.5 flex items-baseline justify-between gap-3">
+                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                        {filled.toFixed(6)} / {total.toFixed(6)}
+                      </span>
+                      {order.limitPrice ? (
+                        <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                          @ ${Number(order.limitPrice).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </span>
-                      </div>
-                      {order.executionPrice && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Avg Price:
-                          </span>
-                          <span>
-                            $
-                            {Number(order.executionPrice).toLocaleString(
-                              undefined,
-                              {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }
-                            )}
-                          </span>
-                        </div>
-                      )}
+                      ) : null}
                     </div>
-                    {(order.status === "open" ||
-                      order.status === "partially_filled") && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => handleCancelOrder(order.id)}
+
+                    {/* Fill progress, since a partial fill is the state this
+                        product is built to represent honestly. */}
+                    {pct > 0 && pct < 100 && (
+                      <span
+                        aria-hidden
+                        className="mt-2.5 block h-[3px] w-full overflow-hidden rounded-full bg-secondary"
                       >
-                        Cancel Order
-                      </Button>
+                        <span
+                          className="block h-full rounded-full bg-[var(--brand)]"
+                          style={{ width: pct + "%" }}
+                        />
+                      </span>
                     )}
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Order History Table */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Order History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Asset</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Side</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Filled</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {myOrders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
-                    No orders yet
-                  </TableCell>
-                </TableRow>
-              ) : (
-                myOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>
-                      {new Date(order.createdAt).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      {order.asset}
-                    </TableCell>
-                    <TableCell className="capitalize">{order.type}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          order.side === "buy" ? "default" : "destructive"
-                        }
+                    {cancellable && (
+                      <button
+                        onClick={() => handleCancelOrder(order._id)}
+                        className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground underline underline-offset-4 transition-colors hover:text-destructive"
                       >
-                        {order.side.toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{order.amount}</TableCell>
-                    <TableCell>
-                      {order.executionPrice
-                        ? `$${order.executionPrice}`
-                        : order.limitPrice
-                        ? `$${order.limitPrice}`
-                        : "Market"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          order.status === "filled"
-                            ? "default"
-                            : order.status === "cancelled"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                      >
-                        {order.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {order.filledAmount} / {order.amount}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+                        Cancel
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      </div>
+    </main>
   );
 }
