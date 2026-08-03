@@ -109,10 +109,25 @@ export default function Dashboard() {
           SOL: solPrice,
         };
 
-        // Keep last 20 data points
-        const updated = [...prev, newPoint].slice(-20);
-        console.log("📈 Chart data points:", updated.length);
-        return updated;
+        // The backend emits once per upstream message across four streams, so
+        // roughly four times a second, and every emit carries all four prices
+        // whether or not they changed. Appending each one filled the old
+        // 20-point window in about five seconds, over which these pairs simply
+        // do not move: the chart was a flat line by construction.
+        //
+        // Skip readings identical to the last one, so a point means "something
+        // changed", and hold a much longer window.
+        const last = prev[prev.length - 1];
+        const unchanged =
+          last &&
+          last.BTC === newPoint.BTC &&
+          last.ETH === newPoint.ETH &&
+          last.BNB === newPoint.BNB &&
+          last.SOL === newPoint.SOL;
+
+        if (unchanged) return prev;
+
+        return [...prev, newPoint].slice(-400);
       });
     });
 
@@ -298,14 +313,23 @@ export default function Dashboard() {
                   minTickGap={40}
                 />
                 <YAxis
-                  domain={["auto", "auto"]}
+                  // "auto" pads out to roughly 98-102, which renders a real
+                  // 0.08% move as two pixels of flat line. Intraday moves on
+                  // these pairs are fractions of a percent, so the axis is
+                  // fitted to the data with a small proportional pad and a
+                  // floor that stops it collapsing when everything is still.
+                  domain={([min, max]: [number, number]) => {
+                    const span = max - min;
+                    const pad = Math.max(span * 0.35, 0.04);
+                    return [min - pad, max + pad];
+                  }}
                   tick={{ fontSize: 11 }}
                   stroke="currentColor"
                   strokeOpacity={0.2}
                   tickLine={false}
                   axisLine={false}
-                  width={44}
-                  tickFormatter={(v: number) => v.toFixed(1)}
+                  width={52}
+                  tickFormatter={(v: number) => v.toFixed(2)}
                 />
                 <Tooltip
                   contentStyle={{
@@ -321,8 +345,11 @@ export default function Dashboard() {
                     if (!Number.isFinite(n)) return ["", ""];
                     const delta = n - 100;
                     const sign = delta >= 0 ? "+" : "";
+                    // Three decimals: these pairs move in hundredths of a
+                    // percent over a session, and 2dp rounded every reading to
+                    // a flat +0.00%.
                     return [
-                      n.toFixed(2) + " (" + sign + delta.toFixed(2) + "%)",
+                      n.toFixed(3) + " (" + sign + delta.toFixed(3) + "%)",
                       String(name),
                     ];
                   }}
