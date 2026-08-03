@@ -26,9 +26,19 @@ export const API_BASE_URL: string = (() => {
 })();
 
 /**
- * Origin for the socket.io connection. The backend serves websockets from the
- * same origin as the REST API, so this is derived from API_BASE_URL by stripping
- * the trailing `/api`. VITE_SOCKET_URL overrides it if they ever diverge.
+ * Origin for the socket.io connection.
+ *
+ * Socket.IO appends its own `/socket.io/` path, so this must be the bare origin.
+ * Pointing it at the REST base instead makes the client handshake against
+ * `/api/socket.io/`, which 404s and leaves the dashboard stuck on
+ * "Connecting to live market...".
+ *
+ * The `/api` suffix is therefore stripped whether the value came from
+ * VITE_SOCKET_URL or was derived from API_BASE_URL, since setting
+ * VITE_SOCKET_URL to the same value as VITE_API_URL is the obvious mistake.
  */
-export const SOCKET_URL: string =
-  import.meta.env.VITE_SOCKET_URL || API_BASE_URL.replace(/\/api\/?$/, "");
+export const SOCKET_URL: string = (
+  import.meta.env.VITE_SOCKET_URL || API_BASE_URL
+)
+  .replace(/\/+$/, "")
+  .replace(/\/api$/, "");
