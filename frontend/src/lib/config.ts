@@ -8,9 +8,22 @@
 
 const DEFAULT_BACKEND_ORIGIN = "http://localhost:3000";
 
-/** Base URL for REST calls, including the `/api` prefix. */
-export const API_BASE_URL: string =
+const rawApiUrl: string =
   import.meta.env.VITE_API_URL || `${DEFAULT_BACKEND_ORIGIN}/api`;
+
+/**
+ * Base URL for REST calls, including the `/api` prefix.
+ *
+ * All backend routes are mounted under `/api`, so the suffix is required. It is
+ * easy to set VITE_API_URL to the bare backend origin by mistake, which turns
+ * every request into a 404 that only shows up at runtime. Normalise here
+ * instead: strip any trailing slash, then append `/api` if it is missing, so
+ * both `https://host` and `https://host/api` resolve correctly.
+ */
+export const API_BASE_URL: string = (() => {
+  const trimmed = rawApiUrl.replace(/\/+$/, "");
+  return /\/api$/.test(trimmed) ? trimmed : `${trimmed}/api`;
+})();
 
 /**
  * Origin for the socket.io connection. The backend serves websockets from the
