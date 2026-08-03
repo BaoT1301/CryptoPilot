@@ -1,5 +1,4 @@
 import { motion, useReducedMotion } from "motion/react";
-import LivePill from "./LivePill";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -50,10 +49,7 @@ export default function AboutHero() {
           intention.
         </motion.p>
 
-        {/* Live proof, not a claim. The same socket the product runs on. */}
-        <motion.div {...rise(0.16)} className="mt-9">
-          <LivePill />
-        </motion.div>
+
       </div>
     </section>
   );
