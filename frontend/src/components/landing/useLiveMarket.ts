@@ -29,7 +29,39 @@ export type Tick = {
 export type MarketState = Record<Symbol, Tick>;
 
 /** Enough points to show a shape, few enough to stay cheap to render. */
-const WINDOW = 40;
+const WINDOW = 60;
+
+/** Binance market symbol for each asset, used to seed history. */
+const PAIRS: Record<Symbol, string> = {
+  BTC: "BTCUSDT",
+  ETH: "ETHUSDT",
+  SOL: "SOLUSDT",
+  BNB: "BNBUSDT",
+};
+
+/**
+ * Recent closes for one pair, straight from Binance's public REST endpoint.
+ *
+ * The socket only carries what happens from page load onward, and these pairs
+ * can sit unchanged for a minute at a time, so a freshly loaded page showed
+ * four flat rails for a long time. Seeding with real history means the traces
+ * have a true shape immediately, and the live socket continues them.
+ *
+ * No API key, and the endpoint sends Access-Control-Allow-Origin: *.
+ */
+async function fetchHistory(symbol: Symbol, signal: AbortSignal) {
+  const url =
+    "https://api.binance.us/api/v3/klines?symbol=" +
+    PAIRS[symbol] +
+    "&interval=5m&limit=48";
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error("history unavailable");
+  const rows = (await res.json()) as unknown[][];
+  // Index 4 is the close price for the candle.
+  return rows
+    .map((row) => Number(row[4]))
+    .filter((n) => Number.isFinite(n) && n > 0);
+}
 
 const blank = (): Tick => ({ price: 0, dir: 0, history: [], drift: 0 });
 
@@ -55,6 +87,44 @@ export function useLiveMarket() {
   const [prices, setPrices] = useState<MarketState>(EMPTY);
   const [connected, setConnected] = useState(false);
   const previous = useRef<Record<string, number>>({});
+
+  // Seed the traces with real recent history so the panel has shape on first
+  // paint rather than four flat rails.
+  useEffect(() => {
+    const controller = new AbortController();
+
+    Promise.all(
+      ASSETS.map(async ({ key }) => {
+        try {
+          return [key, await fetchHistory(key, controller.signal)] as const;
+        } catch {
+          return [key, [] as number[]] as const;
+        }
+      })
+    ).then((entries) => {
+      if (controller.signal.aborted) return;
+      setPrices((current) => {
+        const next = { ...current };
+        for (const [key, history] of entries) {
+          if (history.length < 2) continue;
+          // Live ticks may already have arrived; keep them on the end so the
+          // seed never overwrites fresher data.
+          const merged = [...history, ...current[key].history].slice(-WINDOW);
+          const first = merged[0];
+          const latest = current[key].price || merged[merged.length - 1];
+          next[key] = {
+            ...current[key],
+            price: latest,
+            history: merged,
+            drift: first ? (latest - first) / first : 0,
+          };
+        }
+        return next;
+      });
+    });
+
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     let socket: Socket;

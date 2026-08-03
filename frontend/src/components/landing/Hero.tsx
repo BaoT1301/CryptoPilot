@@ -95,8 +95,14 @@ export default function Hero() {
             className="rounded-xl border border-border bg-card"
           >
             <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Live market
+              <span className="flex items-baseline gap-2.5">
+                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                  Live market
+                </span>
+                {/* The trace covers the last four hours, so say so. */}
+                <span className="font-mono text-[11px] text-muted-foreground/60">
+                  4h
+                </span>
               </span>
               <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
                 <span
@@ -183,7 +189,8 @@ export default function Hero() {
             </ul>
 
             <p className="px-5 py-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
-              Prices stream from Binance over our own websocket. Not a mockup.
+              Live prices over our own websocket, on four hours of Binance
+              history. Not a mockup.
             </p>
           </motion.div>
         </div>
