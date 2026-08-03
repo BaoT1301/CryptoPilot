@@ -1,6 +1,6 @@
 // Setup basic Express server + Routes
 
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import historyRoutes from "./modules/history/history.routes";
 import cors from "cors";
 import http from "http";
@@ -73,6 +73,44 @@ app.use("/api/chat", AuthMiddleware, chatRoutes);
 // Health check
 app.get("/", (req: Request, res: Response) =>
   res.send("Express TypeScript API with MongoDB Atlas running")
+);
+
+/**
+ * Everything under /api answers with JSON, including failures.
+ *
+ * Without these, an unmatched route or an escaped error fell through to
+ * Express's default handler, which replies with an HTML error page. The
+ * frontend parses every response body as JSON, so an HTML reply surfaced to the
+ * user as "Unexpected token '<'" rather than anything about what went wrong.
+ * A bad id on GET /api/orders/:id did exactly that.
+ *
+ * Error bodies are also normalised to { message }, which is the single field
+ * the frontend reads. Handlers previously returned { message }, { error,
+ * message } and { error } alone, and that last shape left the UI with nothing
+ * to display.
+ */
+app.use("/api", (_req: Request, res: Response) => {
+  res.status(404).json({ message: "Not found" });
+});
+
+app.use(
+  "/api",
+  (err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = Number(err?.status || err?.statusCode) || 500;
+
+    // Mongoose cast failures are a malformed id, which is a client error.
+    if (err?.name === "CastError") {
+      return res.status(400).json({ message: "Invalid id" });
+    }
+
+    console.error("[api]", err);
+    res.status(status).json({
+      message:
+        status === 500
+          ? "Something went wrong on our side."
+          : err?.message || "Request failed",
+    });
+  }
 );
 
 setupPriceSocket(server);
