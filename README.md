@@ -62,6 +62,30 @@ npm run dev               # http://localhost:5173
 For local development leave `CROSS_SITE_COOKIES` unset in the backend `.env`,
 and set `FRONTEND_URL=http://localhost:5173`.
 
+### Running the frontend against the deployed API
+
+Useful when you only want to work on the UI. Create `frontend/.env.local`
+(gitignored):
+
+```
+VITE_API_URL=/api
+VITE_DEV_API_PROXY=https://your-backend.up.railway.app
+VITE_DEV_PROXY_ORIGIN=https://your-frontend.up.railway.app
+```
+
+A relative `VITE_API_URL` means the browser only ever talks to the dev server,
+so requests are same-origin and CORS does not apply. Vite proxies `/api` and
+`/socket.io` to the target, and presents `VITE_DEV_PROXY_ORIGIN` as the Origin
+so the deployed backend accepts them.
+
+Without this, pointing `VITE_API_URL` straight at the deployed API produces a
+confusing half-working state: live prices arrive, because the websocket
+transport does not enforce CORS the way an XHR does, while every authenticated
+request fails with "Failed to fetch".
+
+`FRONTEND_URL` on the backend also accepts a comma-separated list, which is the
+alternative if you would rather allow the dev origin server-side.
+
 ---
 
 ## Deploying to Railway
@@ -125,16 +149,38 @@ generally needs `0.0.0.0/0`.
 
 ---
 
+## Design system
+
+The UI runs on one system, documented at the top of `frontend/src/index.css`.
+
+**Colour is data.** The page is warm paper and ink. There are exactly three
+chromatic values and each has one job: brand amber for identity and
+interaction, market green for price up, market red for price down. Per-asset
+marks (`--asset-btc` and friends) identify a series. Nothing else is allowed to
+be chromatic, which is deliberately the inverse of the category default of dark
+navy, electric violet and neon glow.
+
+**Shape.** Buttons are full pill, cards 12px, inputs 10px. Applied everywhere.
+
+**Type.** Geist and Geist Mono, self-hosted. Display weight 400 with tracking
+around -0.03em. Every number is mono with tabular figures, so columns do not
+jitter as prices tick.
+
+**Motion** is motivated or absent. A price flashes because the price changed; a
+sparkline moves because data moved. Everything collapses under
+`prefers-reduced-motion`.
+
+**Each page owns its composition.** The language is shared, the layouts are
+not: the landing page is an asymmetric hero with a live market panel, About is
+a scroll-pinned horizontal sequence plus an annotated schematic, Dashboard is a
+readout with a chart and a hairline ledger, Trading is a three-column terminal
+with a depth-weighted book, Chat is a single conversation column.
+
+---
+
 ## Known issues
 
 These are pre-existing and were **not** introduced by combining the repositories.
-
-**Blocking a fully working deploy**
-
-- `POST /api/auth/refresh`, `/logout`, `/forgot-password`, and `/reset-password`
-  are mounted behind `AuthMiddleware` (`backend/src/server.ts:37`). Forgot-password
-  is therefore unusable when logged out, and refresh fails precisely when the
-  access token has expired — the only time it would be called.
 
 **Security**
 
