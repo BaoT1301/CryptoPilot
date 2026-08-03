@@ -5,7 +5,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { useState, useEffect } from "react";
@@ -22,7 +21,6 @@ export default function Dashboard() {
   const [isConnected, setIsConnected] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState("BTC");
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [portfolio, setPortfolio] = useState<PortfolioAsset[]>([]);
 
   const [livePrices, setLivePrices] = useState({
@@ -318,10 +316,10 @@ export default function Dashboard() {
                   // these pairs are fractions of a percent, so the axis is
                   // fitted to the data with a small proportional pad and a
                   // floor that stops it collapsing when everything is still.
-                  domain={([min, max]: [number, number]) => {
+                  domain={([min, max]: readonly [number, number]) => {
                     const span = max - min;
                     const pad = Math.max(span * 0.35, 0.04);
-                    return [min - pad, max + pad];
+                    return [min - pad, max + pad] as [number, number];
                   }}
                   tick={{ fontSize: 11 }}
                   stroke="currentColor"
@@ -478,7 +476,7 @@ export default function Dashboard() {
             <ul className="mt-6">
               {recentOrders.map((order) => (
                 <li
-                  key={order._id}
+                  key={order.id}
                   className="flex items-center justify-between gap-4 border-b border-border py-4"
                 >
                   <span className="flex min-w-0 items-center gap-3">

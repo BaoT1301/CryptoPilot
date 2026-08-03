@@ -14,7 +14,8 @@ export enum HistoryStatus {
   CANCELLED = "CANCELLED",
 }
 export interface HistoryDocument extends Document {
-  account: Types.ObjectId;
+  /** The app identifies users by uuid, not ObjectId. See schema note below. */
+  account: string;
   type: HistoryType;
   asset: string;
   amount: number;
@@ -26,10 +27,14 @@ export interface HistoryDocument extends Document {
 
 const historySchema = new Schema<HistoryDocument>(
   {
+    // Was ObjectId with ref "Account", a collection that does not exist in
+    // this codebase. Every user id in this app is a uuidv4 string issued at
+    // signup, so an ObjectId field could never hold one and every read and
+    // write of history failed validation.
     account: {
-      type: Schema.Types.ObjectId,
-      ref: "Account",
+      type: String,
       required: true,
+      index: true,
     },
     type: {
       type: String,

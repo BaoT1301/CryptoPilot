@@ -22,10 +22,6 @@ export async function createHistoryEntry(
   if (data.amount <= 0) {
     throw new Error("Amount must be positive");
   }
-  if (!Types.ObjectId.isValid(data.accountId)) {
-    throw new Error("Invalid accountId");
-  }
-
   const entry = await HistoryModel.create({
     account: data.accountId,
     type: data.type,
@@ -42,9 +38,6 @@ export async function listHistory(
 ): Promise<HistoryDocument[]> {
   const query: any = {};
   if (accountId) {
-    if (!Types.ObjectId.isValid(accountId)) {
-      throw new Error("Invalid accountId");
-    }
     query.account = accountId;
   }
 

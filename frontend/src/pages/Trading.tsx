@@ -473,7 +473,7 @@ export default function Trading() {
                 const cancellable =
                   order.status === "open" || order.status === "partially_filled";
                 return (
-                  <li key={order._id} className="border-b border-border py-4">
+                  <li key={order.id} className="border-b border-border py-4">
                     <div className="flex items-center justify-between gap-3">
                       <span className="flex items-center gap-2.5">
                         <span
@@ -527,7 +527,7 @@ export default function Trading() {
 
                     {cancellable && (
                       <button
-                        onClick={() => handleCancelOrder(order._id)}
+                        onClick={() => handleCancelOrder(order.id)}
                         className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground underline underline-offset-4 transition-colors hover:text-destructive"
                       >
                         Cancel
