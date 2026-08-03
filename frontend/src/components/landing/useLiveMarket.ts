@@ -1,0 +1,96 @@
+import { useEffect, useRef, useState } from "react";
+import { io, type Socket } from "socket.io-client";
+import { SOCKET_URL } from "@/lib/config";
+
+export type Symbol = "BTC" | "ETH" | "SOL" | "BNB";
+
+export const ASSETS: { key: Symbol; name: string }[] = [
+  { key: "BTC", name: "Bitcoin" },
+  { key: "ETH", name: "Ethereum" },
+  { key: "SOL", name: "Solana" },
+  { key: "BNB", name: "BNB" },
+];
+
+export type Tick = {
+  price: number;
+  /** -1 down, 0 unchanged, 1 up. Drives the flash and the arrow. */
+  dir: -1 | 0 | 1;
+};
+
+export type MarketState = Record<Symbol, Tick>;
+
+const EMPTY: MarketState = {
+  BTC: { price: 0, dir: 0 },
+  ETH: { price: 0, dir: 0 },
+  SOL: { price: 0, dir: 0 },
+  BNB: { price: 0, dir: 0 },
+};
+
+/**
+ * Subscribes to the same price feed the trading app uses.
+ *
+ * The landing page shows real numbers from our own backend rather than a
+ * screenshot or invented figures, so the hero is accurate by construction and
+ * the motion is motivated: it moves because the market moved.
+ *
+ * Falls back silently to a disconnected state - the page must read correctly
+ * with no socket at all, since a visitor should never see a broken hero
+ * because the feed is down.
+ */
+export function useLiveMarket() {
+  const [prices, setPrices] = useState<MarketState>(EMPTY);
+  const [connected, setConnected] = useState(false);
+  const previous = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    let socket: Socket;
+    try {
+      socket = io(SOCKET_URL, {
+        transports: ["websocket", "polling"],
+        reconnectionAttempts: 3,
+        reconnectionDelay: 2000,
+      });
+    } catch {
+      return;
+    }
+
+    socket.on("connect", () => setConnected(true));
+    socket.on("disconnect", () => setConnected(false));
+    socket.on("connect_error", () => setConnected(false));
+
+    socket.on("priceUpdate", (incoming: Record<string, string | number>) => {
+      setPrices((current) => {
+        const next = { ...current };
+        for (const { key } of ASSETS) {
+          const value = Number(incoming?.[key]);
+          if (!Number.isFinite(value) || value <= 0) continue;
+
+          const before = previous.current[key];
+          next[key] = {
+            price: value,
+            dir: before === undefined || before === value ? 0 : value > before ? 1 : -1,
+          };
+          previous.current[key] = value;
+        }
+        return next;
+      });
+    });
+
+    return () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+    };
+  }, []);
+
+  return { prices, connected };
+}
+
+/** Prices span ~$70,000 to ~$70. One formatter would render both badly. */
+export function formatPrice(value: number) {
+  if (!value) return "-";
+  const decimals = value >= 1000 ? 0 : value >= 100 ? 1 : 2;
+  return value.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}

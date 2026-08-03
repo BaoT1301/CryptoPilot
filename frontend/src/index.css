@@ -1,62 +1,115 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Self-hosted variable fonts. Replaces the Google Fonts <link> that was in
+   index.html: a render-blocking request to a third party on every page load. */
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================================
+   CRYPTO PILOT DESIGN SYSTEM
+
+   Concept: "the only color on the page is the market."
+
+   The page is paper and ink. Green and red appear ONLY where real price data
+   does, so color carries meaning instead of decoration. This is deliberately
+   the inverse of the category default (dark navy + electric violet + glow),
+   which reads as generic crypto and is the exact palette every AI-generated
+   fintech page reaches for. The previous primary here was
+   oklch(0.45 0.22 262) - blue-violet - which is that default.
+
+   Radius rule (applied everywhere, no exceptions):
+     buttons  -> full pill
+     cards    -> 12px  (--radius)
+     inputs   -> 10px
+   ============================================================================ */
+
 :root {
-  /* <CHANGE> Updated color scheme for fintech/crypto platform - professional blues and grays */
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(0.15 0 0);
-  --card: oklch(0.99 0 0);
-  --card-foreground: oklch(0.15 0 0);
-  --popover: oklch(0.99 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(0.45 0.22 262);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.5 0.15 240);
-  --secondary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.92 0 0);
-  --muted-foreground: oklch(0.56 0 0);
-  --accent: oklch(0.6 0.18 260);
-  --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0 0);
-  --input: oklch(0.92 0 0);
-  --ring: oklch(0.45 0.22 262);
-  --chart-1: oklch(0.45 0.22 262);
-  --chart-2: oklch(0.6 0.18 260);
-  --chart-3: oklch(0.5 0.15 240);
-  --chart-4: oklch(0.4 0.2 250);
-  --chart-5: oklch(0.55 0.16 265);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.15 0 0);
-  --sidebar-primary: oklch(0.45 0.22 262);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.92 0 0);
-  --sidebar-accent-foreground: oklch(0.45 0.22 262);
-  --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.45 0.22 262);
+  /* Paper. Warm off-white, never pure #fff, so ink has somewhere to sit. */
+  --paper: oklch(0.977 0.005 92);
+  --paper-sunk: oklch(0.955 0.006 92);
+  --background: var(--paper);
+
+  /* Ink. Warm near-black, never pure #000. */
+  --foreground: oklch(0.205 0.008 75);
+
+  --card: oklch(0.995 0.003 92);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.995 0.003 92);
+  --popover-foreground: var(--foreground);
+
+  /* Primary action is ink, matching the reference set (black CTA on light). */
+  --primary: oklch(0.205 0.008 75);
+  --primary-foreground: oklch(0.985 0.004 92);
+
+  --secondary: oklch(0.94 0.006 92);
+  --secondary-foreground: var(--foreground);
+
+  --muted: oklch(0.94 0.006 92);
+  --muted-foreground: oklch(0.53 0.009 78);
+
+  /* Market semantics. The only chromatic values in the system. */
+  --market-up: oklch(0.585 0.135 155);
+  --market-down: oklch(0.585 0.165 27);
+  --accent: var(--market-up);
+  --accent-foreground: oklch(0.985 0.004 92);
+
+  --destructive: var(--market-down);
+  --destructive-foreground: oklch(0.985 0.004 92);
+
+  /* Hairlines, not boxes. Structure comes from rules and space. */
+  --border: oklch(0.895 0.006 92);
+  --input: oklch(0.895 0.006 92);
+  --ring: oklch(0.205 0.008 75);
+
+  --chart-1: var(--market-up);
+  --chart-2: var(--market-down);
+  --chart-3: oklch(0.45 0.01 80);
+  --chart-4: oklch(0.65 0.01 80);
+  --chart-5: oklch(0.80 0.008 85);
+
+  --radius: 0.75rem;
+
+  --sidebar: oklch(0.955 0.006 92);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: oklch(0.205 0.008 75);
+  --sidebar-primary-foreground: oklch(0.985 0.004 92);
+  --sidebar-accent: oklch(0.94 0.006 92);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: oklch(0.895 0.006 92);
+  --sidebar-ring: oklch(0.205 0.008 75);
 }
 
+/* Dark mode inverts the paper, not the concept: still ink-and-paper with
+   market colour as the only chroma. Hierarchy parity with light is preserved. */
 .dark {
-  --background: oklch(0.12 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.15 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.15 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.65 0.22 262);
-  --primary-foreground: oklch(0.12 0 0);
-  --secondary: oklch(0.55 0.15 240);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.7 0 0);
-  --accent: oklch(0.7 0.18 260);
-  --accent-foreground: oklch(0.12 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --paper: oklch(0.185 0.006 75);
+  --paper-sunk: oklch(0.155 0.006 75);
+  --background: var(--paper);
+  --foreground: oklch(0.955 0.004 92);
+  --card: oklch(0.215 0.006 75);
+  --card-foreground: oklch(0.955 0.004 92);
+  --popover: oklch(0.215 0.006 75);
+  --popover-foreground: oklch(0.955 0.004 92);
+
+  /* On dark paper the high-contrast action inverts to light. */
+  --primary: oklch(0.955 0.004 92);
+  --primary-foreground: oklch(0.185 0.006 75);
+
+  --secondary: oklch(0.26 0.006 75);
+  --secondary-foreground: oklch(0.955 0.004 92);
+  --muted: oklch(0.26 0.006 75);
+  --muted-foreground: oklch(0.70 0.008 80);
+
+  /* Lifted for legibility against dark paper; same hues as light mode. */
+  --market-up: oklch(0.72 0.155 155);
+  --market-down: oklch(0.68 0.175 27);
+  --accent: var(--market-up);
+  --accent-foreground: oklch(0.185 0.006 75);
+  --destructive: var(--market-down);
+  --destructive-foreground: oklch(0.185 0.006 75);
   --border: oklch(0.25 0 0);
   --input: oklch(0.25 0 0);
   --ring: oklch(0.65 0.22 262);
@@ -76,8 +129,13 @@
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  /* @fontsource-variable registers these as "... Variable". The previous names
+     ("Geist" / "Geist Fallback") matched nothing and there was no generic
+     fallback, so the entire site silently rendered in the browser's default
+     serif. */
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -124,7 +182,28 @@
     @apply bg-background text-foreground;
   }
   html {
-    color-scheme: dark;
+    /* Was hardcoded to `dark`, which gave light mode dark-styled native
+       scrollbars and form controls even though a full light palette exists. */
+    color-scheme: light dark;
+  }
+  /* Market data is compared vertically down columns; proportional digits make
+     those columns jitter as prices tick. */
+  .tabular-nums,
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* Hairline rules do the structural work that cards would otherwise do. */
+  .rule {
+    border-color: color-mix(in oklch, var(--foreground) 12%, transparent);
+  }
+  .text-up {
+    color: var(--market-up);
+  }
+  .text-down {
+    color: var(--market-down);
   }
 }
 
