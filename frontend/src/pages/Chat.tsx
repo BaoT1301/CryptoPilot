@@ -53,13 +53,19 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const response = await sendMessage(body);
+      const res = await sendMessage(body);
+      const text = (res.reply ?? res.response ?? "").trim();
+      // An empty body is a failure even though the request succeeded. Without
+      // this the bubble renders blank and looks like the assistant said
+      // nothing, which is exactly how the field-name mismatch hid itself.
+      if (!text) throw new Error("empty reply");
+
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: response.response,
+          content: text,
           timestamp: new Date(),
         },
       ]);
