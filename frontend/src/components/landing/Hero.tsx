@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight, ArrowDown, ArrowUp } from "@phosphor-icons/react";
 import { ASSETS, formatPrice, useLiveMarket } from "./useLiveMarket";
+import Sparkline from "./Sparkline";
+import MagneticButton from "./MagneticButton";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -36,8 +38,15 @@ export default function Hero() {
               {...rise(0)}
               className="max-w-[13ch] text-[clamp(2.75rem,6.2vw,5rem)] font-normal leading-[1.02] tracking-[-0.04em] text-foreground"
             >
-              Trade crypto on a
-              <span className="italic"> real </span>
+              Trade crypto on a{" "}
+              <motion.span
+                className="marker italic"
+                initial={reduce ? false : { "--marker-scale": 0 } as never}
+                animate={{ "--marker-scale": 1 } as never}
+                transition={{ duration: 0.7, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <span>real</span>
+              </motion.span>{" "}
               order book.
             </motion.h1>
 
@@ -54,9 +63,9 @@ export default function Hero() {
               {...rise(0.16)}
               className="mt-9 flex flex-wrap items-center gap-3"
             >
-              <Link
+              <MagneticButton
                 to="/signup"
-                className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-transform duration-200 hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.98]"
+                className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground active:scale-[0.98]"
               >
                 Start trading
                 <ArrowUpRight
@@ -64,7 +73,7 @@ export default function Hero() {
                   weight="bold"
                   className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                 />
-              </Link>
+              </MagneticButton>
               <Link
                 to="/about"
                 className="inline-flex items-center rounded-full border border-border px-6 py-3.5 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-secondary"
@@ -101,18 +110,33 @@ export default function Hero() {
             </div>
 
             <ul>
-              {ASSETS.map(({ key, name }) => {
+              {ASSETS.map(({ key, name, color }) => {
                 const tick = prices[key];
                 return (
                   <li
                     key={key}
-                    className="flex items-baseline justify-between border-b border-border px-5 py-4 last:border-b-0"
+                    className="flex items-center justify-between border-b border-border px-5 py-4 last:border-b-0"
                   >
-                    <div className="flex items-baseline gap-3">
+                    <div className="flex items-center gap-3">
+                      <span
+                        aria-hidden
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
                       <span className="font-mono text-sm font-medium text-foreground">
                         {key}
                       </span>
-                      <span className="text-sm text-muted-foreground">{name}</span>
+                      <span className="hidden text-sm text-muted-foreground sm:inline">
+                        {name}
+                      </span>
+                    </div>
+
+                    {/* Live trace of the prices this session has actually seen. */}
+                    <div className="ml-auto mr-4 hidden text-muted-foreground sm:block">
+                      <Sparkline
+                        points={tick.history}
+                        dir={tick.drift > 0 ? 1 : tick.drift < 0 ? -1 : 0}
+                      />
                     </div>
 
                     <div className="flex items-center gap-2">

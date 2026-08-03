@@ -9,6 +9,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { LogoMark } from "./brand/Logo";
 import ThemeToggle from "./ui/toggle";
 import { useAuth } from "../lib/AuthContext";
 import {
@@ -53,11 +54,9 @@ export default function Header() {
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">₿</span>
-          </div>
-          <span className="text-xl font-bold text-foreground">
+        <Link to="/" className="flex items-center gap-2.5" aria-label="Crypto Pilot home">
+          <LogoMark size={26} animate className="text-foreground" />
+          <span className="text-[17px] font-medium tracking-[-0.02em] text-foreground">
             Crypto Pilot
           </span>
         </Link>

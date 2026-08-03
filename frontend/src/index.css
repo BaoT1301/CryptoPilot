@@ -50,10 +50,18 @@
   --muted: oklch(0.94 0.006 92);
   --muted-foreground: oklch(0.53 0.009 78);
 
-  /* Market semantics. The only chromatic values in the system. */
+  /* Three colours, three jobs. Nothing else is allowed to be chromatic.
+       brand  -> identity and interaction (logo, hover, marker, focus)
+       up     -> price rose
+       down   -> price fell
+     Keeping brand off the green/red axis means an amber highlight can never be
+     misread as a market signal. */
+  --brand: oklch(0.705 0.155 62);
+  --brand-soft: oklch(0.705 0.155 62 / 0.16);
+
   --market-up: oklch(0.585 0.135 155);
   --market-down: oklch(0.585 0.165 27);
-  --accent: var(--market-up);
+  --accent: var(--brand);
   --accent-foreground: oklch(0.985 0.004 92);
 
   --destructive: var(--market-down);
@@ -104,9 +112,11 @@
   --muted-foreground: oklch(0.70 0.008 80);
 
   /* Lifted for legibility against dark paper; same hues as light mode. */
+  --brand: oklch(0.775 0.145 65);
+  --brand-soft: oklch(0.775 0.145 65 / 0.2);
   --market-up: oklch(0.72 0.155 155);
   --market-down: oklch(0.68 0.175 27);
-  --accent: var(--market-up);
+  --accent: var(--brand);
   --accent-foreground: oklch(0.185 0.006 75);
   --destructive: var(--market-down);
   --destructive-foreground: oklch(0.185 0.006 75);
@@ -198,6 +208,54 @@
   /* Hairline rules do the structural work that cards would otherwise do. */
   .rule {
     border-color: color-mix(in oklch, var(--foreground) 12%, transparent);
+  }
+
+  /* Film grain. A flat light page reads as empty; a very low-opacity noise
+     tile gives the paper a surface without adding colour or motion cost.
+     Fixed and pointer-events-none so it never repaints on scroll. */
+  .grain::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.42;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E");
+  }
+  .dark .grain::after {
+    mix-blend-mode: screen;
+    opacity: 0.22;
+  }
+
+  /* Highlighter sweep, drawn behind the text baseline so it reads as marker on
+     paper rather than a background fill. Animates its own width on reveal. */
+  .marker {
+    position: relative;
+    display: inline-block;
+  }
+  .marker > span {
+    position: relative;
+    z-index: 1;
+  }
+  .marker::before {
+    content: "";
+    position: absolute;
+    left: -0.06em;
+    right: -0.06em;
+    bottom: 0.06em;
+    height: 0.5em;
+    /* Uneven edges and a slight tilt so it reads as a marker stroke rather
+       than a rectangle sitting behind the word. */
+    background: linear-gradient(
+      100deg,
+      color-mix(in oklch, var(--brand) 34%, transparent) 0%,
+      color-mix(in oklch, var(--brand) 46%, transparent) 45%,
+      color-mix(in oklch, var(--brand) 30%, transparent) 100%
+    );
+    transform: scaleX(var(--marker-scale, 1)) rotate(-0.6deg);
+    transform-origin: left center;
+    border-radius: 3px 6px 4px 2px;
   }
   .text-up {
     color: var(--market-up);

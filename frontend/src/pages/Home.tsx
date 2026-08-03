@@ -1,4 +1,5 @@
 import Hero from "@/components/landing/Hero";
+import Ticker from "@/components/landing/Ticker";
 import Capabilities from "@/components/landing/Capabilities";
 import Lifecycle from "@/components/landing/Lifecycle";
 import Copilot from "@/components/landing/Copilot";
@@ -17,6 +18,7 @@ export default function Home() {
   return (
     <main className="w-full">
       <Hero />
+      <Ticker />
       <Capabilities />
       <Lifecycle />
       <Copilot />

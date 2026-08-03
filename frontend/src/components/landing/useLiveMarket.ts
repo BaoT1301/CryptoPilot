@@ -4,26 +4,40 @@ import { SOCKET_URL } from "@/lib/config";
 
 export type Symbol = "BTC" | "ETH" | "SOL" | "BNB";
 
-export const ASSETS: { key: Symbol; name: string }[] = [
-  { key: "BTC", name: "Bitcoin" },
-  { key: "ETH", name: "Ethereum" },
-  { key: "SOL", name: "Solana" },
-  { key: "BNB", name: "BNB" },
+/**
+ * Each asset carries its own brand colour. These are the real marks (the
+ * dashboard already uses #F7931A for Bitcoin), so the colour identifies the
+ * asset rather than decorating the row.
+ */
+export const ASSETS: { key: Symbol; name: string; color: string }[] = [
+  { key: "BTC", name: "Bitcoin", color: "#F7931A" },
+  { key: "ETH", name: "Ethereum", color: "#627EEA" },
+  { key: "SOL", name: "Solana", color: "#14B892" },
+  { key: "BNB", name: "BNB", color: "#F0B90B" },
 ];
 
 export type Tick = {
   price: number;
   /** -1 down, 0 unchanged, 1 up. Drives the flash and the arrow. */
   dir: -1 | 0 | 1;
+  /** Rolling window of recent prices, oldest first. Feeds the sparkline. */
+  history: number[];
+  /** Change across the window, as a fraction. */
+  drift: number;
 };
 
 export type MarketState = Record<Symbol, Tick>;
 
+/** Enough points to show a shape, few enough to stay cheap to render. */
+const WINDOW = 40;
+
+const blank = (): Tick => ({ price: 0, dir: 0, history: [], drift: 0 });
+
 const EMPTY: MarketState = {
-  BTC: { price: 0, dir: 0 },
-  ETH: { price: 0, dir: 0 },
-  SOL: { price: 0, dir: 0 },
-  BNB: { price: 0, dir: 0 },
+  BTC: blank(),
+  ETH: blank(),
+  SOL: blank(),
+  BNB: blank(),
 };
 
 /**
@@ -66,9 +80,14 @@ export function useLiveMarket() {
           if (!Number.isFinite(value) || value <= 0) continue;
 
           const before = previous.current[key];
+          const history = [...current[key].history, value].slice(-WINDOW);
+          const first = history[0];
+
           next[key] = {
             price: value,
             dir: before === undefined || before === value ? 0 : value > before ? 1 : -1,
+            history,
+            drift: first ? (value - first) / first : 0,
           };
           previous.current[key] = value;
         }
