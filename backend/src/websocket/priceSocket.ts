@@ -21,21 +21,43 @@ const BINANCE_WS =
 const prices: Prices = { ...INITIAL_PRICES };
 
 let io: SocketIOServer;
+/** Guards against attaching a second Socket.IO server to the same HTTP server. */
+let ioInitialized = false;
+/** Consecutive failed Binance connection attempts, for backoff. */
+let reconnectAttempts = 0;
 
-export function setupPriceSocket(server: HTTPServer) {
-  io = new SocketIOServer(server, {
-    cors: { origin: FRONTEND_URL || "*", credentials: true },
-  });
+const MAX_RECONNECT_DELAY_MS = 60_000;
 
-  console.log("\n🚀 [BE] WebSocket server started");
-  console.log(`📡 [BE] Connecting to Binance: ${BINANCE_WS}`);
-  console.log(`🌐 [BE] CORS allowed origin: ${FRONTEND_URL || "*"}\n`);
+/**
+ * Connects to the Binance ticker stream, with reconnect.
+ *
+ * Kept strictly separate from the Socket.IO server lifecycle. The reconnect
+ * path previously re-invoked setupPriceSocket(), which called
+ * `new SocketIOServer(server, ...)` again and reassigned the module-level `io`.
+ * Socket.IO re-registers its HTTP "request" listener on attach but does not
+ * remove "upgrade" listeners, so every reconnect leaked listeners AND left
+ * already-connected browsers bound to an orphaned instance that nothing emits
+ * to. Symptom: every open tab's price ticker froze at its last value while
+ * still appearing connected, and only a hard refresh recovered it. If Binance
+ * was unreachable this repeated every 5s forever, growing memory until the
+ * container was OOM-killed.
+ */
+function connectBinance() {
+  let binanceWS: WebSocket;
 
-  const binanceWS = new WebSocket(BINANCE_WS);
+  // `new WebSocket()` throws synchronously on a malformed URL. Uncaught inside
+  // the reconnect timer that would take down the process.
+  try {
+    binanceWS = new WebSocket(BINANCE_WS);
+  } catch (err) {
+    console.error("[BE] Invalid BINANCE_WS url:", err);
+    scheduleReconnect();
+    return;
+  }
 
   binanceWS.on("open", () => {
+    reconnectAttempts = 0;
     console.log("✅ [BE] Connected to Binance US WebSocket");
-    console.log(`📊 [BE] Initial prices: ${JSON.stringify(prices)}\n`);
   });
 
   binanceWS.on("message", (data: Buffer) => {
@@ -50,12 +72,9 @@ export function setupPriceSocket(server: HTTPServer) {
         const oldPrice = prices[key];
         prices[key] = newPrice;
 
-        console.log(`💰 [BE] ${key} price updated: ${oldPrice} → ${newPrice}`);
-
+        // No per-tick logging: four ticker streams at sub-second cadence
+        // flooded the Railway logs continuously.
         io.emit("priceUpdate", prices);
-        console.log(
-          `📤 [BE] Emitted priceUpdate to ${io.engine.clientsCount} client(s)`
-        );
 
         updatePrices(prices);
 
@@ -65,8 +84,6 @@ export function setupPriceSocket(server: HTTPServer) {
             console.error("❌ [BE] Error checking limit orders:", err);
           });
         }
-      } else {
-        console.log(`⚠️  [BE] Unknown ticker symbol: ${ticker.s}`);
       }
     } catch (err) {
       console.error("❌ [BE] Failed to parse message:", err);
@@ -78,19 +95,42 @@ export function setupPriceSocket(server: HTTPServer) {
   });
 
   binanceWS.on("close", () => {
-    console.log("⚠️  [BE] Binance WebSocket closed. Reconnecting in 5s...");
-    setTimeout(() => setupPriceSocket(server), 5000);
+    // Reconnect the upstream feed ONLY. The Socket.IO server is untouched, so
+    // connected browsers keep their sockets and simply resume receiving prices.
+    scheduleReconnect();
   });
+}
+
+/** Reconnects with exponential backoff, capped, instead of a hot 5s loop. */
+function scheduleReconnect() {
+  reconnectAttempts += 1;
+  const delay = Math.min(
+    1000 * 2 ** Math.min(reconnectAttempts, 6),
+    MAX_RECONNECT_DELAY_MS
+  );
+  console.warn(
+    `[BE] Binance feed down (attempt ${reconnectAttempts}). Retrying in ${delay}ms`
+  );
+  setTimeout(connectBinance, delay).unref?.();
+}
+
+export function setupPriceSocket(server: HTTPServer) {
+  if (ioInitialized) return io;
+
+  io = new SocketIOServer(server, {
+    cors: { origin: FRONTEND_URL || "*", credentials: true },
+  });
+  ioInitialized = true;
+
+  console.log("[BE] WebSocket server started");
+  console.log(`[BE] CORS allowed origin: ${FRONTEND_URL || "*"}`);
 
   io.on("connection", (socket) => {
-    console.log(`\n👤 [BE] Client connected: ${socket.id}`);
-    console.log(`📊 [BE] Sending initial prices: ${JSON.stringify(prices)}\n`);
+    // Send a snapshot immediately so a new tab isn't blank until the next tick.
     socket.emit("priceUpdate", prices);
-
-    socket.on("disconnect", () => {
-      console.log(`👋 [BE] Client disconnected: ${socket.id}`);
-    });
   });
+
+  connectBinance();
 
   return io;
 }

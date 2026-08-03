@@ -46,9 +46,18 @@ export const depositController = {
     }
   },
 
-  async getById(req: Request, res: Response) {
+  async getById(req: AuthRequest, res: Response) {
     try {
+      const userId = req.user?.userId;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
       const dep = await depositService.getDeposit(req.params.id);
+
+      // Ownership check. Previously any authenticated user could read any
+      // deposit id belonging to anyone else.
+      if (dep.userId !== userId) {
+        return res.status(404).json({ message: "Deposit not found" });
+      }
 
       if (!isNetworkKey(dep.network)) {
         return res.status(500).json({ message: "Invalid network key" });
@@ -88,8 +97,28 @@ export const depositController = {
     }
   },
 
-  async update(req: Request, res: Response) {
+  async update(req: AuthRequest, res: Response) {
     try {
+      const userId = req.user?.userId;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const dep = await depositService.getDeposit(req.params.id);
+      if (dep.userId !== userId) {
+        return res.status(404).json({ message: "Deposit not found" });
+      }
+
+      // Confirmation progress is owned exclusively by the deposit watcher.
+      // Letting a client set these meant `{"status":"COMPLETED"}` on your own
+      // pending deposit instantly credited the balance -- and since the deposit
+      // amount is caller-supplied, that was unbounded self-crediting.
+      const PROTECTED = ["status", "amount", "txHash", "confirmations", "userId"];
+      const attempted = PROTECTED.filter((f) => f in (req.body ?? {}));
+      if (attempted.length > 0) {
+        return res.status(403).json({
+          message: `Cannot modify: ${attempted.join(", ")}`,
+        });
+      }
+
       const updated = await depositService.updateDeposit(req.params.id, req.body);
       return res.status(200).json(updated);
     } catch (err) {
@@ -97,8 +126,16 @@ export const depositController = {
     }
   },
 
-  async remove(req: Request, res: Response) {
+  async remove(req: AuthRequest, res: Response) {
     try {
+      const userId = req.user?.userId;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const dep = await depositService.getDeposit(req.params.id);
+      if (dep.userId !== userId) {
+        return res.status(404).json({ message: "Deposit not found" });
+      }
+
       await depositService.deleteDeposit(req.params.id);
       return res.status(204).send();
     } catch (err) {

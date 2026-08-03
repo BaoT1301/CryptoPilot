@@ -8,7 +8,7 @@ import {
   getListWithdraw,
   getWithdraw,
 } from "@/api/wallet/walletAPI";
-import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DepositHistory } from "@/components/wallet/walletHistory";
 import { WalletOverview } from "@/components/wallet/walletOverview";
@@ -26,16 +26,13 @@ import { WithdrawDetailsCard } from "@/components/wallet/walletWithdraw";
 import { WithdrawCreateCard } from "@/components/wallet/walletWithdrawCreate";
 import { WithdrawHistory } from "@/components/wallet/walletWithdrawHistory";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
-
 export default function WalletPage() {
+  // Must come from the provider in main.tsx. This module previously created its
+  // own QueryClient at module scope, but no QueryClientProvider used it -- so
+  // the useQuery calls below read from the app's client while every
+  // invalidateQueries() hit the orphan, silently doing nothing. Deposits and
+  // withdrawals only appeared to refresh because of the 3s refetchInterval.
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<"wallet" | "deposit" | "withdraw">("wallet");
 
   const [selectedDepositId, setSelectedDepositId] = useState<string | null>(

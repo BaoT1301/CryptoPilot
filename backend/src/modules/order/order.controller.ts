@@ -55,14 +55,57 @@ export const createOrder = async (
 
 // PUT /orders/:id
 export const updateOrder = async (
-  req: Request<
-    { id: string },
-    OrderResponse | { message: string },
-    UpdateOrderBody
-  >,
+  req: AuthRequest,
   res: Response<OrderResponse | { message: string }>
 ) => {
-  const order = await OrderService.update(req.params.id, req.body);
+  const userId = req.user?.userId;
+
+  const existing = await OrderService.getById(req.params.id);
+  if (!existing) return res.status(404).json({ message: "Order not found" });
+
+  // Ownership check. Without this, any authenticated user could target ANY
+  // order id -- including other users' -- and flip its status.
+  if (existing.userId !== userId) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  // Only an untouched order may be amended. Editing one that is partially
+  // filled would desync it from the in-memory book and from balance maths.
+  if (existing.status !== "open") {
+    return res
+      .status(400)
+      .json({ message: "Only open orders can be updated" });
+  }
+
+  // Strict whitelist. The previous implementation passed req.body straight to
+  // findByIdAndUpdate, so a caller could set status/filledAmount/executionPrice
+  // directly -- and since balances are derived by summing filledAmount over
+  // status:"filled" orders, that minted unlimited balance out of nothing.
+  const { limitPrice, amount } = req.body ?? {};
+  const patch: Record<string, number> = {};
+
+  if (limitPrice !== undefined) {
+    const value = Number(limitPrice);
+    if (!Number.isFinite(value) || value <= 0) {
+      return res.status(400).json({ message: "limitPrice must be a positive number" });
+    }
+    patch.limitPrice = value;
+  }
+
+  if (amount !== undefined) {
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0) {
+      return res.status(400).json({ message: "amount must be a positive number" });
+    }
+    patch.amount = value;
+    patch.originalAmount = value;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ message: "Nothing to update" });
+  }
+
+  const order = await OrderService.update(req.params.id, patch);
   if (!order) return res.status(404).json({ message: "Order not found" });
 
   broadcastOrderUpdate("orderUpdated", order);

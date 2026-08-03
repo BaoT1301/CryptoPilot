@@ -337,19 +337,21 @@ export default function Trading() {
                   Asks (Sell)
                 </h3>
                 <div className="space-y-1">
-                  {orderBook?.asks.slice(0, 10).map((ask, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between text-sm p-2 bg-destructive/5 rounded"
-                    >
-                      <span className="text-destructive font-mono">
-                        ${ask.price.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {ask.remainingAmount.toFixed(8)}
-                      </span>
-                    </div>
-                  )) || (
+                  {orderBook?.asks?.length ? (
+                    orderBook.asks.slice(0, 10).map((ask, idx) => (
+                      <div
+                        key={idx}
+                        className="flex justify-between text-sm p-2 bg-destructive/5 rounded"
+                      >
+                        <span className="text-destructive font-mono">
+                          ${ask.price.toLocaleString()}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {ask.remainingAmount.toFixed(8)}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
                     <p className="text-sm text-muted-foreground">
                       No sell orders
                     </p>
@@ -373,19 +375,21 @@ export default function Trading() {
                   Bids (Buy)
                 </h3>
                 <div className="space-y-1">
-                  {orderBook?.bids.slice(0, 10).map((bid, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between text-sm p-2 bg-green-500/5 rounded"
-                    >
-                      <span className="text-green-600 font-mono">
-                        ${bid.price.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {bid.remainingAmount.toFixed(8)}
-                      </span>
-                    </div>
-                  )) || (
+                  {orderBook?.bids?.length ? (
+                    orderBook.bids.slice(0, 10).map((bid, idx) => (
+                      <div
+                        key={idx}
+                        className="flex justify-between text-sm p-2 bg-green-500/5 rounded"
+                      >
+                        <span className="text-green-600 font-mono">
+                          ${bid.price.toLocaleString()}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {bid.remainingAmount.toFixed(8)}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
                     <p className="text-sm text-muted-foreground">
                       No buy orders
                     </p>

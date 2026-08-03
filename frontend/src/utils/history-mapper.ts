@@ -39,7 +39,10 @@ export function mapApiToRow(entry: HistoryApiEntry): HistoryRow {
     pair,
     side: entry.type,
     price,
-    amount: entry.amount.toString(),
+    // `price` above is null-guarded; `amount` was not. A single row with a null
+    // amount threw here and took down the entire History page, since the caller
+    // maps eagerly outside any try/catch.
+    amount: entry.amount != null ? entry.amount.toString() : "—",
     fee,
     status,
   };

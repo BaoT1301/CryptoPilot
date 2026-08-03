@@ -10,12 +10,15 @@ import * as CountryService from "./country.service";
  *   404 Not Found => if no countries found
  *   500 Server Error
  */
-export const getAllCountries = async (res: Response<{}, CountryResponse[]>) => {
+export const getAllCountries = async (_req: Request, res: Response) => {
+  // The first parameter was previously named `res` but typed as a Response.
+  // Express passes the Request first, so every `res.status(...)` call here was
+  // actually `request.status(...)` -- undefined -- throwing a TypeError and
+  // making this endpoint return 500 on every request, in every DB state.
   try {
     const countries = await CountryService.getAll();
-    if (countries.length === 0) {
-      return res.status(404).send();
-    }
+    // An empty collection is a valid empty list, not a 404. Returning 404 here
+    // broke the country dropdown on a fresh database.
     res.status(200).json(countries);
   } catch (err) {
     return res.status(500).json({ message: "Server Error" });

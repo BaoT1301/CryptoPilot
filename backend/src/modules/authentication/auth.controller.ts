@@ -47,7 +47,12 @@ export const SignUp = async (
   req: Request<RegisterRequest>,
   res: Response<RegisterResponse>
 ) => {
-  const { email, password, confirmPassword, role } = req.body;
+  // `role` is deliberately NOT read from the request body. Accepting it let any
+  // caller self-register as an admin with POST /register {"role":"admin"}; the
+  // issued JWT then carried role:"admin", passing Authorize(ERole.admin) and
+  // exposing every user's PII via GET /api/profile. Roles are assigned
+  // server-side only.
+  const { email, password, confirmPassword } = req.body;
   if (!email || !password)
     return res.status(400).json({ message: "Missing email or password" });
   if (!isValidEmail(email))
@@ -70,7 +75,7 @@ export const SignUp = async (
 
     const userId = uuidv4();
     const newUser = await create(
-      { userId, email, password: hashedPassword, role: role ?? "user" },
+      { userId, email, password: hashedPassword, role: ERole.user },
       session
     );
 
@@ -101,13 +106,20 @@ export const SignUp = async (
     await session.abortTransaction();
     session.endSession();
 
-    let message = "Server error";
-    if (err instanceof Error) {
-      message = err.message;
+    console.error(err);
+
+    // A duplicate email is a client error, not a server fault. This previously
+    // returned 500 with the raw driver text -- "E11000 duplicate key error
+    // collection: ... index: email_1 ..." -- which the frontend rendered
+    // straight to the user and which leaks internal schema details.
+    const raw = err instanceof Error ? err.message : "";
+    if (raw.includes("E11000") || raw.includes("duplicate key")) {
+      return res
+        .status(409)
+        .json({ message: "An account with that email already exists" });
     }
 
-    console.error(err);
-    return res.status(500).json({ message });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -324,22 +336,28 @@ export const ResetPassword = async (
  * @param res - Express response
  */
 export const LogOut = async (req: Request, res: Response) => {
+  // Clearing the session must always succeed. Previously verifyToken() ran
+  // inside the try *before* clearCookie, so an expired access_token -- the
+  // normal state when someone logs out after 15 minutes -- threw
+  // TokenExpiredError, returned 500, and left BOTH cookies in place. The user
+  // could not sign out.
   try {
-    const token = req.cookies.access_token;
+    const token = req.cookies?.access_token;
     if (token) {
       const decoded: any = await verifyToken(token);
       if (decoded?.userId) {
         await update(decoded.userId, { refreshToken: undefined });
       }
     }
-
-    res.clearCookie("access_token", clearAuthCookieOptions);
-    res.clearCookie("refresh_token", clearAuthCookieOptions);
-
-    res.status(204).send();
-  } catch (err) {
-    return res.status(500).json({ message: "Server error" });
+  } catch {
+    // An expired or malformed token means there is no server-side session left
+    // to revoke. Fall through and clear the cookies regardless.
   }
+
+  res.clearCookie("access_token", clearAuthCookieOptions);
+  res.clearCookie("refresh_token", clearAuthCookieOptions);
+
+  return res.status(204).send();
 };
 
 /**

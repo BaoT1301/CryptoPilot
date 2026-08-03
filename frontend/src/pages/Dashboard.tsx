@@ -160,14 +160,17 @@ export default function Dashboard() {
   const loadPortfolio = async () => {
     try {
       const data = await getPortfolio();
-      setPortfolio(data.portfolio);
+      // A user with no holdings can come back without a portfolio array at all.
+      // Storing undefined here made the render below throw on .map(), which
+      // unmounted the whole dashboard into a blank page.
+      setPortfolio(data?.portfolio ?? []);
     } catch (err) {
       console.error("Failed to load portfolio:", err);
     }
   };
 
   // Map portfolio to display format with live prices
-  const cryptos = portfolio.map((asset) => ({
+  const cryptos = (portfolio ?? []).map((asset) => ({
     id: asset.symbol,
     name: asset.name,
     symbol: asset.symbol,

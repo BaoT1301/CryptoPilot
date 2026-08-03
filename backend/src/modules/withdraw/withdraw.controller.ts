@@ -25,8 +25,38 @@ export const createWithdrawInput = async (req: AuthRequest, res: Response) => {
     if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
     }
+
+    // Balances are computed as (deposits - withdrawals), so an unvalidated
+    // amount was directly exploitable:
+    //   "-100"  -> balance = 0 - (-100) = +100. Free money.
+    //   "abc"   -> parseFloat gives NaN, and Math.max(0, NaN) is NaN, which
+    //              permanently poisons that asset's balance with no way back.
+    const { amount, network, asset, address } = req.body ?? {};
+    const numericAmount = Number(amount);
+
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        return res
+            .status(400)
+            .json({ message: "amount must be a positive number" });
+    }
+    if (typeof network !== "string" || !isNetworkKey(network)) {
+        return res.status(400).json({ message: "Unsupported network" });
+    }
+    if (typeof asset !== "string" || !asset.trim()) {
+        return res.status(400).json({ message: "asset is required" });
+    }
+    if (typeof address !== "string" || !address.trim()) {
+        return res.status(400).json({ message: "address is required" });
+    }
+
     try{
-        const data = await createWithdraw(userId, req.body)
+        const data = await createWithdraw(userId, {
+            ...req.body,
+            amount: numericAmount,
+            network,
+            asset,
+            address,
+        })
         return res.status(200).json(data)
     }
     catch(err){
@@ -34,15 +64,29 @@ export const createWithdrawInput = async (req: AuthRequest, res: Response) => {
     }
 }
 
-export const getWithdrawById = async (req: Request, res: Response) => {
+export const getWithdrawById = async (req: AuthRequest, res: Response) => {
     try {
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
         const data = await getWithdraw(req.params.id);
-        
-        if (data?.network && !isNetworkKey(data?.network)) {
-            return res.status(500).json({ message: "Invalid network key" });
+
+        if (!data) {
+            return res.status(404).json({ message: "Withdrawal not found" });
         }
-       
-        const chain = Network[data?.network]
+        // Ownership check -- this previously returned any user's withdrawal.
+        if (data.userId !== userId) {
+            return res.status(404).json({ message: "Withdrawal not found" });
+        }
+
+        // The old guard was `if (data?.network && !isNetworkKey(...))`, so a
+        // missing/empty network skipped it and Network[undefined] threw a
+        // TypeError on the next line, surfacing as a 500.
+        if (!data.network || !isNetworkKey(data.network)) {
+            return res.status(422).json({ message: "Invalid network key" });
+        }
+
+        const chain = Network[data.network]
         return res.status(200).json({...data,
             networkMeta: {
             requiredConfirmations: chain.requiredConfirmations,

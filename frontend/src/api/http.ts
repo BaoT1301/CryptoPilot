@@ -31,5 +31,16 @@ export async function apiCall<T>(
     throw new Error(msg);
   }
 
-  return res.json();
+  // 204 No Content (order cancel, logout) has an empty body, and res.json()
+  // on an empty body throws "Unexpected end of JSON input" -- turning a
+  // successful request into a visible error.
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await res.text();
+  if (!text) {
+    return undefined as T;
+  }
+  return JSON.parse(text) as T;
 }
