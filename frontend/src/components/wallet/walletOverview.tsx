@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
@@ -100,12 +99,14 @@ export function WalletOverview({
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-1">
-      <Card className="rounded-xl">
-        <CardHeader>
-          <CardTitle>Balances</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+    <div>
+      {/* Was a Card containing a grid of Cards. Nested elevation says nothing;
+          hairlines and space do the grouping. */}
+      <section className="space-y-3">
+        <h2 className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          Balances
+        </h2>
+        <div className="space-y-3">
           {assetsWithBalance.length === 0 ? (
             <div className="rounded-xl border p-4 text-sm text-muted-foreground">
               No balance yet. Complete deposits to see your balance.
@@ -113,15 +114,18 @@ export function WalletOverview({
           ) : (
             <div className="grid gap-3 md:grid-cols-3">
               {assetsWithBalance.map((a) => (
-                <Card key={a.symbol} className="rounded-xl">
-                  <CardContent className="p-4">
-                    <p className="text-sm text-muted-foreground">{a.symbol}</p>
-                    <p className="text-xl font-semibold">
-                      {Number(balances[a.symbol]).toFixed(8)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{a.name}</p>
-                  </CardContent>
-                </Card>
+                <div
+                  key={a.symbol}
+                  className="rounded-xl border border-border p-4"
+                >
+                  <p className="font-mono text-xs text-muted-foreground">
+                    {a.symbol}
+                  </p>
+                  <p className="mt-1.5 font-mono text-xl tabular-nums text-foreground">
+                    {Number(balances[a.symbol]).toFixed(8)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{a.name}</p>
+                </div>
               ))}
             </div>
           )}
@@ -209,8 +213,8 @@ export function WalletOverview({
               </>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   );
 }

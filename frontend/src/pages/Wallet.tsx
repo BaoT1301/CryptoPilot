@@ -242,25 +242,35 @@ export default function WalletPage() {
     );
   }
   return (
-    <div className="min-h-screen w-full bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-5xl space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">Wallet</h1>
-          </div>
-        </div>
+    <main className="mx-auto w-full max-w-[1100px] px-6 py-10 md:px-10 md:py-14">
+      <div className="space-y-8">
+        <header className="border-b border-border pb-6">
+          <h1 className="text-[clamp(1.6rem,3vw,2.25rem)] font-normal tracking-[-0.03em] text-foreground">
+            Wallet
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Simulated deposits and withdrawals, with the confirmation flow a
+            real chain would put you through.
+          </p>
+        </header>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="rounded-xl">
-            <TabsTrigger value="wallet" className="rounded-xl">
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="deposit" className="rounded-xl">
-              Deposit
-            </TabsTrigger>
-            <TabsTrigger value="withdraw" className="rounded-xl">
-              Withdraw
-            </TabsTrigger>
+          <TabsList className="h-auto rounded-full border border-border bg-transparent p-1">
+            {(
+              [
+                ["wallet", "Overview"],
+                ["deposit", "Deposit"],
+                ["withdraw", "Withdraw"],
+              ] as const
+            ).map(([value, label]) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="rounded-full px-4 py-1.5 font-mono text-xs uppercase tracking-[0.12em] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
+              >
+                {label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="wallet" className="space-y-4">
@@ -374,6 +384,6 @@ export default function WalletPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </main>
   );
 }
