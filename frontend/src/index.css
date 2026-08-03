@@ -62,6 +62,13 @@
   --market-up: oklch(0.585 0.135 155);
   --market-down: oklch(0.585 0.165 27);
   --accent: var(--brand);
+
+  /* Per-asset marks. These identify a series, so they live alongside the
+     semantic colours rather than being inlined as hex at each use site. */
+  --asset-btc: #f7931a;
+  --asset-eth: #627eea;
+  --asset-sol: #14b892;
+  --asset-bnb: #e0a90b;
   --accent-foreground: oklch(0.985 0.004 92);
 
   --destructive: var(--market-down);
@@ -120,22 +127,35 @@
   --accent-foreground: oklch(0.185 0.006 75);
   --destructive: var(--market-down);
   --destructive-foreground: oklch(0.185 0.006 75);
-  --border: oklch(0.25 0 0);
-  --input: oklch(0.25 0 0);
-  --ring: oklch(0.65 0.22 262);
-  --chart-1: oklch(0.65 0.22 262);
-  --chart-2: oklch(0.7 0.18 260);
-  --chart-3: oklch(0.55 0.15 240);
-  --chart-4: oklch(0.6 0.2 250);
-  --chart-5: oklch(0.65 0.16 265);
-  --sidebar: oklch(0.15 0 0);
-  --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.65 0.22 262);
-  --sidebar-primary-foreground: oklch(0.12 0 0);
-  --sidebar-accent: oklch(0.25 0 0);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.25 0 0);
-  --sidebar-ring: oklch(0.65 0.22 262);
+  /* These were still the old blue-violet palette after the light theme was
+     rewritten, so anything bound to a chart or ring token flipped to violet in
+     dark mode while light mode looked correct. */
+  --border: oklch(0.30 0.005 75);
+  --input: oklch(0.30 0.005 75);
+  --ring: oklch(0.955 0.004 92);
+
+  --chart-1: var(--market-up);
+  --chart-2: var(--market-down);
+  --chart-3: oklch(0.72 0.01 80);
+  --chart-4: oklch(0.55 0.01 80);
+  --chart-5: oklch(0.40 0.01 80);
+
+  --sidebar: oklch(0.155 0.006 75);
+  --sidebar-foreground: oklch(0.955 0.004 92);
+  --sidebar-primary: oklch(0.955 0.004 92);
+  --sidebar-primary-foreground: oklch(0.185 0.006 75);
+  --sidebar-accent: oklch(0.26 0.006 75);
+  --sidebar-accent-foreground: oklch(0.955 0.004 92);
+  --sidebar-border: oklch(0.30 0.005 75);
+  --sidebar-ring: oklch(0.955 0.004 92);
+
+  /* Asset marks stay recognisable but are lifted so they hold contrast on dark
+     paper. Bitcoin's orange sits near the brand amber, so it is nudged warmer
+     to keep an asset series distinguishable from an interaction affordance. */
+  --asset-btc: #ffa33d;
+  --asset-eth: #8b9ef5;
+  --asset-sol: #2fd8a6;
+  --asset-bnb: #f5cb3f;
 }
 
 @theme inline {

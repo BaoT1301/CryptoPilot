@@ -7,7 +7,10 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        // Hairline border, no drop shadow. Elevation is not carrying meaning
+        // here, so a 1px rule does the grouping and keeps the page flat and
+        // paper-like rather than a field of floating panels.
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border border-border py-6",
         className
       )}
       {...props}
