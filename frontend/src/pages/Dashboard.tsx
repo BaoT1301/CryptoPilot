@@ -358,19 +358,29 @@ export default function Dashboard() {
                       borderRadius: "8px",
                       color: "white",
                     }}
-                    formatter={(
-                      value: number | undefined,
-                      name: string | undefined
-                    ) => {
-                      if (value === undefined || !name) return ["", ""];
-                      const coinSymbol = name as "BTC" | "ETH" | "SOL" | "BNB";
+                    formatter={(value, name) => {
+                      // Recharts types `value` as number | string | array, and has
+                      // tightened this signature across 3.x releases. Narrow it
+                      // here rather than annotating the params, so the component
+                      // keeps compiling across recharts versions.
+                      const numericValue =
+                        typeof value === "number" ? value : Number(value);
+                      const seriesName = typeof name === "string" ? name : "";
+                      if (!Number.isFinite(numericValue) || !seriesName) {
+                        return ["", ""];
+                      }
+                      const coinSymbol = seriesName as
+                        | "BTC"
+                        | "ETH"
+                        | "SOL"
+                        | "BNB";
                       const currentPrice = livePrices[coinSymbol];
-                      const percentChange = (value - 100).toFixed(3);
+                      const percentChange = (numericValue - 100).toFixed(3);
                       return [
-                        `Index: ${value.toFixed(3)} (${
+                        `Index: ${numericValue.toFixed(3)} (${
                           percentChange >= "0" ? "+" : ""
-                        }${percentChange}%) | Price: $${currentPrice.toLocaleString()}`,
-                        name,
+                        }${percentChange}%) | Price: $${currentPrice?.toLocaleString() ?? "—"}`,
+                        seriesName,
                       ];
                     }}
                   />

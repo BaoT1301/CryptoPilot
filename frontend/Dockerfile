@@ -1,46 +1,26 @@
 # ========================================
-# BASE DEPENDENCIES STAGE
-# ========================================
-FROM node:22-alpine AS deps
-WORKDIR /usr/src/app
-
-# Install system dependencies
-RUN apk add --no-cache \
-    libc6-compat \
-    python3 \
-    make \
-    g++ \
-    && ln -sf python3 /usr/bin/python
-
-# Copy package files
-COPY package.json ./
-
-# Install ALL dependencies
-RUN npm install
-
-# ========================================
 # BUILDER STAGE
 # ========================================
 FROM node:22-alpine AS builder
 WORKDIR /usr/src/app
 
-# Copy config files first
-COPY package*.json ./
-COPY tsconfig.json* ./
-COPY vite.config* ./
-COPY tailwind.config* ./
+# Install with the lockfile so the build uses the exact versions that were
+# tested. Copying package.json alone and running `npm install` re-resolves
+# every caret range, which silently drifts dependencies between builds.
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Set build environment
-ARG VITE_BACKEND_URL
-
-ENV NODE_ENV=production
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
-
-# Copy node_modules from deps stage
-COPY --from=deps /usr/src/app/node_modules ./node_modules
-
-# Copy source code
 COPY . .
+
+# Vite inlines VITE_* values into the bundle at build time, so they must be
+# present BEFORE `npm run build` -- setting them at runtime has no effect.
+# Railway exposes service variables to Docker builds as build args.
+ARG VITE_API_URL
+ARG VITE_SOCKET_URL
+ARG VITE_BASE_PATH
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+ENV VITE_BASE_PATH=$VITE_BASE_PATH
 
 RUN npm run build
 
@@ -50,40 +30,24 @@ RUN npm run build
 FROM node:22-alpine AS production
 WORKDIR /usr/src/app
 
-# Install runtime dependencies
-RUN apk add --no-cache \
-    dumb-init \
-    curl \
-    tzdata \
-    && rm -rf /var/cache/apk/*
+ENV NODE_ENV=production
 
-# Install serve globally
-RUN npm install -g serve
+RUN apk add --no-cache dumb-init && rm -rf /var/cache/apk/*
+RUN npm install -g serve@14
 
-# Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 reactjs
 
-# Set production environment
-ENV NODE_ENV=production
+# The app is served from the domain root (vite `base` defaults to "/"), so the
+# build output goes straight to ./dist. `serve -s` handles SPA fallback,
+# rewriting unknown paths to index.html -- no serve.json needed.
+COPY --from=builder --chown=reactjs:nodejs /usr/src/app/dist ./dist
 
-# Copy built application from builder stage
-# Copy built application from builder stage
-COPY --from=builder --chown=reactjs:nodejs /usr/src/app/dist ./dist/crypto-pilot
-COPY --from=builder --chown=reactjs:nodejs /usr/src/app/package.json ./
-COPY --from=builder --chown=reactjs:nodejs /usr/src/app/node_modules ./node_modules
-
-# Create serve.json for SPA rewrites
-RUN echo '{ "public": "dist", "rewrites": [ { "source": "/crypto-pilot/**", "destination": "/crypto-pilot/index.html" } ] }' > serve.json
-
-# Security: Switch to non-root user
 USER reactjs
 
-# Expose port
+# Railway injects PORT; default to 3000 for local `docker run`.
+ENV PORT=3000
 EXPOSE 3000
 
-# Use dumb-init to handle signals and reaping zombies
 ENTRYPOINT ["dumb-init", "--"]
-
-# Start production server
-CMD ["serve", "-c", "serve.json", "-l", "3000"]
+CMD ["sh", "-c", "serve -s dist -l ${PORT:-3000}"]
