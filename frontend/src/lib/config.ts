@@ -8,8 +8,12 @@
 
 const DEFAULT_BACKEND_ORIGIN = "http://localhost:3000";
 
-const rawApiUrl: string =
-  import.meta.env.VITE_API_URL || `${DEFAULT_BACKEND_ORIGIN}/api`;
+// Values pasted into a deploy dashboard routinely pick up a trailing space or
+// newline. Those survive into the bundle and corrupt every derived URL, so trim
+// before doing anything else.
+const rawApiUrl: string = (
+  import.meta.env.VITE_API_URL || `${DEFAULT_BACKEND_ORIGIN}/api`
+).trim();
 
 /**
  * Base URL for REST calls, including the `/api` prefix.
@@ -37,8 +41,16 @@ export const API_BASE_URL: string = (() => {
  * VITE_SOCKET_URL or was derived from API_BASE_URL, since setting
  * VITE_SOCKET_URL to the same value as VITE_API_URL is the obvious mistake.
  */
-export const SOCKET_URL: string = (
-  import.meta.env.VITE_SOCKET_URL || API_BASE_URL
-)
-  .replace(/\/+$/, "")
-  .replace(/\/api$/, "");
+export const SOCKET_URL: string = (() => {
+  const raw = (import.meta.env.VITE_SOCKET_URL || API_BASE_URL).trim();
+  try {
+    // Parsing to an origin discards ANY path, not just "/api". This matters
+    // because socket.io interprets a path as a namespace: io("https://host/api")
+    // completes the HTTP handshake (101) but then joins namespace "/api", which
+    // the server never registers, so the client's "connect" event never fires
+    // and the UI waits forever on a socket that looks connected.
+    return new URL(raw).origin;
+  } catch {
+    return raw.replace(/\/+$/, "").replace(/\/api$/, "");
+  }
+})();
