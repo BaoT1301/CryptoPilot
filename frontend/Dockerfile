@@ -43,6 +43,12 @@ RUN addgroup --system --gid 1001 nodejs && \
 # rewriting unknown paths to index.html -- no serve.json needed.
 COPY --from=builder --chown=reactjs:nodejs /usr/src/app/dist ./dist
 
+# package.json is kept so that `npm start` also works. Railway's configured
+# start command overrides the CMD below, and without this file npm exits with
+# ENOENT before it can run anything. The "start" script runs the same serve
+# invocation as the CMD.
+COPY --from=builder --chown=reactjs:nodejs /usr/src/app/package.json ./
+
 USER reactjs
 
 # Railway injects PORT; default to 3000 for local `docker run`.
