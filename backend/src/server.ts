@@ -43,10 +43,10 @@ app.use(
     origin(origin, callback) {
       // Same-origin and non-browser callers (curl, health checks) send no Origin.
       if (!origin) return callback(null, true);
-      if (ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ""))) {
-        return callback(null, true);
-      }
-      return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+      // Reject by withholding the header, never by throwing. Throwing here goes
+      // to the Express error handler and turns a disallowed origin into a 500,
+      // which looks like a server fault instead of a policy decision.
+      return callback(null, ALLOWED_ORIGINS.includes(origin.replace(/\/$/, "")));
     },
     credentials: true,
   })

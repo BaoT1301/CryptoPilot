@@ -184,6 +184,26 @@ export default function Dashboard() {
   const totalValue = cryptos.reduce((sum, c) => sum + Number(c.value || 0), 0);
   const assetMeta = Object.fromEntries(ASSETS.map((a) => [a.key, a]));
 
+  /**
+   * Rebase every series to 100 at the session's first tick.
+   *
+   * Without this the axis spans zero to sixty thousand, Bitcoin pins to the top
+   * and the other three collapse into the baseline, which makes the comparison
+   * unreadable. Indexing is what lets four assets at wildly different prices
+   * share one axis.
+   */
+  const indexedChartData = priceChartData.map((point) => {
+    const rebase = (value: number, base?: number) =>
+      base && base > 0 ? (value / base) * 100 : 100;
+    return {
+      date: point.date,
+      BTC: rebase(point.BTC, baselinePrices?.BTC),
+      ETH: rebase(point.ETH, baselinePrices?.ETH),
+      SOL: rebase(point.SOL, baselinePrices?.SOL),
+      BNB: rebase(point.BNB, baselinePrices?.BNB),
+    };
+  });
+
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-10 md:px-10 md:py-14">
       {/* Readout. The portfolio total is the one number that matters, so it is
@@ -262,7 +282,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={360}>
-              <LineChart data={priceChartData}>
+              <LineChart data={indexedChartData}>
                 <CartesianGrid
                   strokeDasharray="2 4"
                   stroke="currentColor"
