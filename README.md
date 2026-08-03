@@ -39,7 +39,7 @@ Requires Node >= 20 and a MongoDB connection string.
 
 ```bash
 cd backend
-cp .env.example .env      # then fill in MONGO_URI and the three JWT secrets
+cp .env.example .env      # then fill in MONGO_URL and the three JWT secrets
 npm install
 npm run dev               # http://localhost:3000
 ```
@@ -80,7 +80,7 @@ Environment variables — see `backend/.env.example` for the full annotated list
 
 | Variable | Notes |
 |---|---|
-| `MONGO_URI` | MongoDB Atlas connection string |
+| `MONGO_URL` | MongoDB connection string. On Railway: `${{MongoDB.MONGO_URL}}` |
 | `JWT_SECRET_KEY` | >= 32 chars, else the app throws on login |
 | `JWT_REFRESH_KEY` | >= 32 chars |
 | `RESET_PASSWORD_SECRET` | >= 32 chars |
