@@ -34,7 +34,10 @@ app.post("/api/auth/login", SignIn);
 
 // Routes
 app.use("/api/history", historyRoutes);
-app.use("/api/auth", AuthMiddleware, authRoutes);
+// authRoutes applies AuthMiddleware per-route: /refresh, /logout,
+// /forgot-password and /reset-password must stay reachable without a valid
+// access token, while /disable is protected inside the router.
+app.use("/api/auth", authRoutes);
 app.use("/api/countries", AuthMiddleware, countryRoutes);
 app.use("/api/profile", AuthMiddleware, profileRoutes);
 app.use("/api/orders", AuthMiddleware, orderRoutes);
