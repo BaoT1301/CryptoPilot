@@ -30,7 +30,7 @@ export function WithdrawHistory({
   currentPage,
 }: Props) {
   return (
-    <div className="rounded-2xl border p-4 space-y-4">
+    <div className="rounded-xl border p-4 space-y-4">
       <h2 className="text-lg font-semibold">Withdraw history</h2>
 
       {isLoading && <div>Loading...</div>}

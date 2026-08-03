@@ -60,7 +60,7 @@ export function FieldError({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn("text-xs font-medium text-red-500", className)}
+      className={cn("text-xs font-medium text-destructive", className)}
       {...props}
     />
   );

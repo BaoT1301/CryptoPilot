@@ -20,11 +20,35 @@ export default function ProfilePage() {
 
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error || !profile) return <div>Error loading profile</div>;
+  // Both states were bare unstyled divs rendering flush against the header
+  // with no container and no way to recover.
+  if (isLoading)
+    return (
+      <main className="mx-auto max-w-lg px-6 py-20">
+        <p className="text-sm text-muted-foreground">Loading your profile</p>
+      </main>
+    );
+
+  if (error || !profile)
+    return (
+      <main className="mx-auto max-w-lg px-6 py-20">
+        <h1 className="text-xl font-normal tracking-[-0.02em] text-foreground">
+          Could not load your profile
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The request did not come back. Check your connection and try again.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-6 inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-[1px] active:scale-[0.98]"
+        >
+          Retry
+        </button>
+      </main>
+    );
 
   return (
-    <div className="space-y-6  max-w-lg mx-auto py-12">
+    <main className="mx-auto max-w-lg space-y-8 px-6 py-14">
       <div className="flex justify-center">
         <AvatarUpload
           value={avatar ?? profile.avatar}
@@ -38,6 +62,6 @@ export default function ProfilePage() {
       </div>
 
       <ProfileForm profile={{ ...profile, avatar: avatar ?? profile.avatar }} />
-    </div>
+    </main>
   );
 }

@@ -233,7 +233,7 @@ export default function WalletPage() {
       <div className="min-h-screen w-full bg-background p-4 md:p-8">
         <div className="mx-auto max-w-5xl space-y-4">
           {errorMessage && (
-            <div className="rounded-2xl border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-xl border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
               {String(errorMessage.message)}
             </div>
           )}
@@ -251,14 +251,14 @@ export default function WalletPage() {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="rounded-2xl">
-            <TabsTrigger value="wallet" className="rounded-2xl">
+          <TabsList className="rounded-xl">
+            <TabsTrigger value="wallet" className="rounded-xl">
               Overview
             </TabsTrigger>
-            <TabsTrigger value="deposit" className="rounded-2xl">
+            <TabsTrigger value="deposit" className="rounded-xl">
               Deposit
             </TabsTrigger>
-            <TabsTrigger value="withdraw" className="rounded-2xl">
+            <TabsTrigger value="withdraw" className="rounded-xl">
               Withdraw
             </TabsTrigger>
           </TabsList>

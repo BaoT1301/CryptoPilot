@@ -1,25 +1,44 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../lib/AuthContext";
 import { signupSchema, type SignupForm } from "../lib/validators";
-import { Link, useLocation } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Field,
-  FieldLabel,
-  FieldError,
-  FieldSet,
-  FieldGroup,
-} from "@/components/ui/field";
+import AuthShell from "@/components/auth/AuthShell";
+
+const FIELDS = [
+  {
+    name: "name" as const,
+    label: "Name",
+    type: "text",
+    autoComplete: "name",
+    placeholder: "Your name",
+  },
+  {
+    name: "email" as const,
+    label: "Email",
+    type: "email",
+    autoComplete: "email",
+    placeholder: "you@example.com",
+  },
+  {
+    name: "password" as const,
+    label: "Password",
+    type: "password",
+    autoComplete: "new-password",
+    placeholder: "At least 8 characters",
+    // Surfaced up front rather than only after a failed submit.
+    hint: "Needs 8+ characters with an uppercase, a lowercase and a number.",
+  },
+  {
+    name: "confirm" as const,
+    label: "Confirm password",
+    type: "password",
+    autoComplete: "new-password",
+    placeholder: "Repeat your password",
+  },
+];
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -32,9 +51,7 @@ export default function Signup() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<SignupForm>({
-    resolver: zodResolver(signupSchema),
-  });
+  } = useForm<SignupForm>({ resolver: zodResolver(signupSchema) });
 
   async function onSubmit(data: SignupForm) {
     const res = await signupAction(data.name, data.email, data.password);
@@ -47,108 +64,86 @@ export default function Signup() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-12">
-      <div className="max-w-lg mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>Create account</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="flex flex-col gap-4"
-            >
-              <FieldSet>
-                <FieldGroup>
-                  <Field>
-                    <FieldLabel htmlFor="name" required>
-                      Full name
-                    </FieldLabel>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="Your Name"
-                      {...register("name")}
-                    />
-                    {errors.name && (
-                      <FieldError>{errors.name.message}</FieldError>
-                    )}
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="email" required>
-                      Email
-                    </FieldLabel>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      {...register("email")}
-                    />
-                    {errors.email && (
-                      <FieldError>{errors.email.message}</FieldError>
-                    )}
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="password" required>
-                      Password
-                    </FieldLabel>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      {...register("password")}
-                    />
-                    {errors.password && (
-                      <FieldError>{errors.password.message}</FieldError>
-                    )}
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="confirm" required>
-                      Confirm password
-                    </FieldLabel>
-                    <Input
-                      id="confirm"
-                      type="password"
-                      placeholder="••••••••"
-                      {...register("confirm")}
-                    />
-                    {errors.confirm && (
-                      <FieldError>{errors.confirm.message}</FieldError>
-                    )}
-                  </Field>
-                </FieldGroup>
-              </FieldSet>
-
-              {errors.root && <FieldError>{errors.root.message}</FieldError>}
-
-              <CardFooter className="px-0 pt-0">
-                <Button
-                  type="submit"
-                  className="w-full cursor-pointer"
-                  disabled={isSubmitting}
+    <AuthShell
+      title="Open an account."
+      subtitle="Free, with simulated funds. No card and no identity check."
+      footer={
+        <>
+          Already have one?{" "}
+          <Link
+            to="/login"
+            state={{ from: (location.state as any)?.from || location.pathname }}
+            className="text-foreground underline underline-offset-4 transition-colors hover:text-[var(--brand)]"
+          >
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+        {FIELDS.map((field) => {
+          const error = errors[field.name];
+          return (
+            <div key={field.name} className="space-y-2">
+              <label
+                htmlFor={field.name}
+                className="block text-sm font-medium text-foreground"
+              >
+                {field.label}
+              </label>
+              <Input
+                id={field.name}
+                type={field.type}
+                autoComplete={field.autoComplete}
+                placeholder={field.placeholder}
+                aria-invalid={!!error}
+                aria-describedby={
+                  error
+                    ? `${field.name}-error`
+                    : field.hint
+                      ? `${field.name}-hint`
+                      : undefined
+                }
+                {...register(field.name)}
+              />
+              {!error && field.hint && (
+                <p
+                  id={`${field.name}-hint`}
+                  className="text-xs text-muted-foreground"
                 >
-                  {isSubmitting ? "Creating…" : "Create account"}
-                </Button>
-              </CardFooter>
-              <div className="text-sm text-muted-foreground mt-2 text-center">
-                Already have an account?{" "}
-                <Link
-                  to="/login"
-                  state={{
-                    from: (location.state as any)?.from || location.pathname,
-                  }}
-                  className="text-primary underline"
+                  {field.hint}
+                </p>
+              )}
+              {error && (
+                <p
+                  id={`${field.name}-error`}
+                  className="text-sm text-destructive"
                 >
-                  Sign in
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+                  {error.message as string}
+                </p>
+              )}
+            </div>
+          );
+        })}
+
+        {errors.root && (
+          <p
+            role="alert"
+            className="rounded-[10px] border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {errors.root.message}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          size="lg"
+          disabled={isSubmitting}
+          className="w-full"
+        >
+          {isSubmitting ? "Creating account" : "Create account"}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }

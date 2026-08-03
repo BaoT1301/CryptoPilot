@@ -10,36 +10,43 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  * separator) and "24/7 Support" for a product with none of those. Real
  * specifics are more convincing than invented scale, and they are also true.
  */
+/** `tint` picks the swatch for each row so the grid is not six identical cards. */
 const ROWS = [
   {
     label: "Price feed",
     value: "Binance websocket",
     note: "Streamed to every open tab over our own socket, no polling.",
+    tint: "var(--asset-btc)",
   },
   {
     label: "Matching",
     value: "In-process engine",
     note: "Limit orders rest on the book. Market orders take from it.",
+    tint: "var(--market-up)",
   },
   {
     label: "Backend",
     value: "Express, TypeScript",
     note: "Mongoose over a MongoDB replica set, with real transactions.",
+    tint: "var(--asset-eth)",
   },
   {
     label: "Auth",
     value: "JWT, argon2",
     note: "Short-lived access tokens with refresh held in httpOnly cookies.",
+    tint: "var(--asset-sol)",
   },
   {
     label: "Copilot",
     value: "OpenAI",
     note: "Prompted with your live positions, not a generic assistant.",
+    tint: "var(--brand)",
   },
   {
     label: "Funds",
     value: "Simulated",
     note: "Prices are real. Balances are not. Nothing is custodied.",
+    tint: "var(--market-down)",
   },
 ];
 
@@ -61,15 +68,23 @@ export default function Stack() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.6, delay: i * 0.06, ease: EASE }}
-              className="border-t border-border pt-5"
+              whileHover={reduce ? undefined : { y: -3 }}
+              className="group relative rounded-xl border border-border bg-card p-6 transition-colors duration-200 hover:border-foreground/20"
             >
-              <dt className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+              {/* The swatch is the only colour in the cell, so six cells read as
+                  six things rather than one repeated card. */}
+              <span
+                aria-hidden
+                className="block h-1 w-8 rounded-full transition-all duration-300 group-hover:w-14"
+                style={{ backgroundColor: row.tint }}
+              />
+              <dt className="mt-5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                 {row.label}
               </dt>
-              <dd className="mt-2.5 text-lg font-normal tracking-[-0.02em] text-foreground">
+              <dd className="mt-2 text-lg font-normal tracking-[-0.02em] text-foreground">
                 {row.value}
               </dd>
-              <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              <dd className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
                 {row.note}
               </dd>
             </motion.div>

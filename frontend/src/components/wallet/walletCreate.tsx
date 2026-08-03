@@ -39,7 +39,7 @@ export function CreateDepositCard({
   const minimum = amount === "" ||Number(amount) >= Number(minDeposit);
 
   return (
-    <Card className="rounded-2xl">
+    <Card className="rounded-xl">
       <CardHeader>
         <CardTitle>Deposit</CardTitle>
       </CardHeader>
@@ -48,7 +48,7 @@ export function CreateDepositCard({
           <div className="space-y-2">
             <label className="text-sm font-medium">Asset</label>
             <Select value={assetSymbol} onValueChange={setAssetSymbol}>
-              <SelectTrigger className="rounded-2xl">
+              <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Select asset" />
               </SelectTrigger>
               <SelectContent>
@@ -64,7 +64,7 @@ export function CreateDepositCard({
           <div className="space-y-2">
             <label className="text-sm font-medium">Network</label>
             <Select value={networkKey} onValueChange={(v: NetworkKey) => setNetworkKey(v)}>
-              <SelectTrigger className="rounded-2xl">
+              <SelectTrigger className="rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -89,10 +89,10 @@ export function CreateDepositCard({
               </p>
             </div>
             <Input
-              className="rounded-2xl"
+              className="rounded-xl"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="leave empty to accept any amount"
+              placeholder="Leave empty to accept any amount"
             />
             {!validAmount && (
               <p className="text-xs text-destructive">Amount must be a positive number</p>
@@ -105,7 +105,7 @@ export function CreateDepositCard({
           </div>
 
           <Button
-            className="w-full rounded-2xl"
+            className="w-full rounded-xl"
             disabled={!minimum}
             onClick={onCreate}>
             {isCreating ? (

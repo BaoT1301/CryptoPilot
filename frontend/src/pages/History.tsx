@@ -24,7 +24,7 @@ export default function History() {
             Trade history
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Loaded from backend
+            Every order you have placed, newest first.
           </p>
         </div>
 
@@ -35,14 +35,14 @@ export default function History() {
       </header>
 
       {isLoading && (
-        <p className="text-sm text-muted-foreground">Loading history…</p>
+        <p className="text-sm text-muted-foreground">Loading history</p>
       )}
 
       {error && (
-        <p className="text-sm text-red-500">{(error as Error).message}</p>
+        <p className="text-sm text-destructive">{(error as Error).message}</p>
       )}
 
-      <section className="overflow-hidden rounded-xl border border-border bg-card/80 shadow-sm backdrop-blur">
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="border-b border-border bg-muted/60 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Recent orders
         </div>
@@ -105,7 +105,7 @@ export default function History() {
                     colSpan={8}
                     className="px-4 py-6 text-center text-sm text-muted-foreground"
                   >
-                    No history yet. Seed some data on the backend.
+                    No trades yet. Your filled and cancelled orders will appear here.
                   </td>
                 </tr>
               )}
@@ -114,7 +114,9 @@ export default function History() {
         </div>
 
         <footer className="flex items-center justify-between gap-3 border-t border-border bg-background/60 px-4 py-2 text-xs text-muted-foreground">
-          <span>Showing {rows.length} orders</span>
+          <span className="tabular-nums">
+            Showing {rows.length} {rows.length === 1 ? "order" : "orders"}
+          </span>
         </footer>
       </section>
     </div>
@@ -124,14 +126,14 @@ function StatusBadge({ status }: { status: TradeStatus }) {
   switch (status) {
     case "Filled":
       return (
-        <Badge className="bg-emerald-500/15 text-emerald-600 ring-1 ring-emerald-500/30">
+        <Badge className="border-transparent bg-[color-mix(in_oklch,var(--market-up)_14%,transparent)] text-[var(--market-up)]">
           {status}
         </Badge>
       );
 
     case "Partially Filled":
       return (
-        <Badge className="bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/30">
+        <Badge className="border-transparent bg-[var(--brand-soft)] text-[var(--brand)]">
           {status}
         </Badge>
       );
@@ -139,7 +141,7 @@ function StatusBadge({ status }: { status: TradeStatus }) {
     case "Cancelled":
     default:
       return (
-        <Badge className="bg-rose-500/15 text-rose-600 ring-1 ring-rose-500/30">
+        <Badge className="border-transparent bg-[color-mix(in_oklch,var(--market-down)_14%,transparent)] text-[var(--market-down)]">
           {status}
         </Badge>
       );
@@ -151,8 +153,8 @@ function SidePill({ side }: { side: TradeSide }) {
       variant="secondary"
       className={
         side === "BUY"
-          ? "bg-emerald-500/15 text-emerald-600"
-          : "bg-rose-500/15 text-rose-600"
+          ? "bg-[color-mix(in_oklch,var(--market-up)_14%,transparent)] text-[var(--market-up)]"
+          : "bg-[color-mix(in_oklch,var(--market-down)_14%,transparent)] text-[var(--market-down)]"
       }
     >
       {side}

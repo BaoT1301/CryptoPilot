@@ -19,11 +19,11 @@ export function WithdrawDetailsCard({ withdraw }: Props) {
   }
 
   const statusColors: Record<WithdrawStatus, string> = {
-    PENDING: "bg-yellow-500/10 text-yellow-500",
-    PROCESSING: "bg-blue-500/10 text-blue-500",
-    COMPLETED: "bg-green-500/10 text-green-500",
-    FAILED: "bg-red-500/10 text-red-500",
-    CANCELLED: "bg-gray-500/10 text-gray-500",
+    PENDING: "bg-secondary text-muted-foreground",
+    PROCESSING: "bg-[var(--brand-soft)] text-[var(--brand)]",
+    COMPLETED: "bg-[color-mix(in_oklch,var(--market-up)_14%,transparent)] text-[var(--market-up)]",
+    FAILED: "bg-[color-mix(in_oklch,var(--market-down)_14%,transparent)] text-[var(--market-down)]",
+    CANCELLED: "bg-secondary text-muted-foreground",
   };
 
   return (

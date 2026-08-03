@@ -47,7 +47,7 @@ export function DepositHistory({
   currentPage:number;
 }) {
   return (
-    <Card className="rounded-2xl">
+    <Card className="rounded-xl">
       <CardHeader>
         <CardTitle>Deposit History</CardTitle>
       </CardHeader>
@@ -57,7 +57,7 @@ export function DepositHistory({
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : deposits.length === 0 ? (
-          <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
+          <div className="rounded-xl border p-4 text-sm text-muted-foreground">
             No deposits yet
           </div>
         ) : (
@@ -66,7 +66,7 @@ export function DepositHistory({
               <button
                 key={d._id}
                 onClick={() => onSelect(d._id)}
-                className={`w-full rounded-2xl border p-3 text-left transition hover:bg-muted/40 ${
+                className={`w-full rounded-xl border p-3 text-left transition hover:bg-muted/40 ${
                   selectedId === d._id ? "bg-muted/40 border-primary" : ""
                 }`}
               >
@@ -85,7 +85,7 @@ export function DepositHistory({
                   <div className="text-right">
                     <p className="text-sm">{d.amount}</p>
                     <p className="text-xs text-muted-foreground">
-                      {d.txHash ? shortenHash(d.txHash) : "no tx yet"}
+                      {d.txHash ? shortenHash(d.txHash) : "Awaiting transaction"}
                     </p>
                   </div>
                 </div>

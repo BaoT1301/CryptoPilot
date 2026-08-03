@@ -18,7 +18,7 @@ import {
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "COMPLETED") {
-    return <Badge className="rounded-full bg-green-500">Completed</Badge>;
+    return <Badge className="rounded-full bg-[var(--market-up)]">Completed</Badge>;
   }
   if (status === "FAILED") {
     return (
@@ -101,19 +101,19 @@ export function WalletOverview({
 
   return (
     <div className="grid gap-4 lg:grid-cols-1">
-      <Card className="rounded-2xl">
+      <Card className="rounded-xl">
         <CardHeader>
           <CardTitle>Balances</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {assetsWithBalance.length === 0 ? (
-            <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border p-4 text-sm text-muted-foreground">
               No balance yet. Complete deposits to see your balance.
             </div>
           ) : (
             <div className="grid gap-3 md:grid-cols-3">
               {assetsWithBalance.map((a) => (
-                <Card key={a.symbol} className="rounded-2xl">
+                <Card key={a.symbol} className="rounded-xl">
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">{a.symbol}</p>
                     <p className="text-xl font-semibold">
@@ -144,7 +144,7 @@ export function WalletOverview({
                     <button
                       key={d._id}
                       onClick={() => onOpenDeposit(d._id)}
-                      className="w-full rounded-2xl border p-3 text-left transition hover:bg-muted/40"
+                      className="w-full rounded-xl border p-3 text-left transition hover:bg-muted/40"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
@@ -167,8 +167,8 @@ export function WalletOverview({
                     </button>
                   ))}
                   {depositsList.length === 0 && (
-                    <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-                      no deposits yet. switch to deposit tab to create one.
+                    <div className="rounded-xl border p-4 text-sm text-muted-foreground">
+                      No deposits yet. Use the Deposit tab to add funds.
                     </div>
                   )}
                 </div>

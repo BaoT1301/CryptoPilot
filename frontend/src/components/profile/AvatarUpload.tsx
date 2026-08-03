@@ -1,3 +1,6 @@
+const PLACEHOLDER_AVATAR =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23edeae2'/%3E%3Ccircle cx='40' cy='31' r='13' fill='%23c6c0b4'/%3E%3Cpath d='M14 74c0-14.4 11.6-26 26-26s26 11.6 26 26z' fill='%23c6c0b4'/%3E%3C/svg%3E";
+
 import { uploadToBunny } from "@/utils/bunnyUpload";
 
 export default function AvatarUpload({
@@ -14,9 +17,12 @@ export default function AvatarUpload({
 
   return (
     <label className="cursor-pointer">
+      {/* Falls back to a local placeholder. The previous default fetched an
+          avatar from ui-avatars.com on every profile view: a third-party
+          request, an uncontrollable colour, and a needless privacy leak. */}
       <img
-        src={value || "https://ui-avatars.com/api/?name=User"}
-        className="w-20 h-20 rounded-full object-cover"
+        src={value || PLACEHOLDER_AVATAR}
+        className="size-20 rounded-full border border-border object-cover transition-opacity hover:opacity-80"
       />
       <input
         type="file"

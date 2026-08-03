@@ -17,9 +17,9 @@ function StatusBadge({ status }: { status: Deposit["status"] }) {
 
 function StatusIcon({ status }: { status: Deposit["status"] }) {
   if (status === "COMPLETED")
-    return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-  if (status === "FAILED") return <XCircle className="h-5 w-5 text-red-500" />;
-  return <Loader2 className="h-5 w-5 animate-spin text-gray-500" />;
+    return <CheckCircle2 className="h-5 w-5 text-[var(--market-up)]" />;
+  if (status === "FAILED") return <XCircle className="h-5 w-5 text-destructive" />;
+  return <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />;
 }
 
 function shortenHash(hash: string, length = 10) {
@@ -57,7 +57,7 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
         <CardContent>
           <Alert>
             <AlertDescription>
-              Deposit or click history to view details
+              Select a deposit from the history to see its details.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -71,7 +71,7 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
       : estimatedProgress;
 
   return (
-    <Card className="rounded-2xl">
+    <Card className="rounded-xl">
       <CardHeader>
         <CardTitle>Deposit Detail</CardTitle>
       </CardHeader>
@@ -98,7 +98,7 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
             <StatusIcon status={deposit.status} />
           </div>
 
-          <div className="rounded-2xl border p-3">
+          <div className="rounded-xl border p-3">
             <p className="text-xs text-muted-foreground">Deposit Address</p>
             <div className="mt-1 flex justify-between gap-2">
               <code className="break-all text-sm">{deposit.address}</code>
@@ -116,7 +116,7 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
             </div>
           </div>
 
-          <div className="rounded-2xl border p-3">
+          <div className="rounded-xl border p-3">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Confirmations</span>
               <span>
@@ -131,15 +131,15 @@ export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
                 ? `Time Remaining: ~${Math.ceil(remainingSec / 60)} min`
                 : hasTx
                 ? `Time Remaining: ~${Math.ceil(remainingSec / 60)} min`
-                : "waiting for transaction"}
+                : "Waiting for the transaction to appear on chain"}
             </p>
           </div>
 
-          <div className="rounded-2xl border p-3">
+          <div className="rounded-xl border p-3">
             <p className="text-xs text-muted-foreground">Amount</p>
             <p>{deposit.amount}</p>
           </div>
-          <div className="rounded-2xl border p-3">
+          <div className="rounded-xl border p-3">
             <p className="text-xs text-muted-foreground">Transaction Hash</p>
             {deposit.txHash ? (
               <p className="text-xs text-muted-foreground">
