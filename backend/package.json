@@ -1,0 +1,56 @@
+{
+  "name": "crypto-pilot-backend",
+  "version": "1.0.0",
+  "description": "Crypto Pilot backend — Express 5 + TypeScript + Mongoose",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "nodemon",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@solana/web3.js": "^1.98.4",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^6.4.9",
+    "argon2": "^0.44.0",
+    "bitcoinjs-lib": "^7.0.0",
+    "bs58": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.2.3",
+    "ecpair": "^3.0.0",
+    "ethers": "^6.16.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mailtrap": "^4.3.2",
+    "mongoose": "^9.0.0",
+    "nodemailer": "^7.0.11",
+    "nodemon": "^3.1.11",
+    "openai": "^6.15.0",
+    "resend": "^6.5.2",
+    "socket.io": "^4.8.1",
+    "swagger-ui": "^5.30.3",
+    "tiny-secp256k1": "^2.2.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "uuid": "^8.3.2",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/mongoose": "^5.11.96",
+    "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1"
+  }
+}

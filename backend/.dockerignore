@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.DS_Store
+coverage
+
+# Never ship secrets into the build context — they persist in intermediate
+# layers and build caches even when the final image omits them.
+.env
+.env.*
+!.env.example
