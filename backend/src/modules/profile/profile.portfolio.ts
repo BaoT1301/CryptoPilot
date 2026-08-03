@@ -38,7 +38,11 @@ export const getPortfolio = async (req: AuthRequest, res: Response) => {
     };
 
     for (const order of orders) {
-      const amount = Number(order.amount);
+      // `amount` is the REMAINING quantity, which the matching engine sets to
+      // zero once an order fills, so summing it produced a balance of 0 for
+      // every asset and an always-empty portfolio. order.balance.ts already
+      // used filledAmount; this is the same sum done correctly.
+      const amount = Number(order.filledAmount) || 0;
       if (order.side === "buy") {
         balances[order.asset] = (balances[order.asset] || 0) + amount;
       } else if (order.side === "sell") {

@@ -17,7 +17,7 @@ export const sendMessage = async (
     // Check authentication
     if (!userId) {
       res.status(401).json({
-        reply: "Please log in to use chat",
+        message: "Please log in to use chat",
         timestamp: new Date(),
       });
       return;
@@ -26,7 +26,7 @@ export const sendMessage = async (
     // Validate message
     if (!validateMessage(message)) {
       res.status(400).json({
-        reply: "Message must be between 1-500 characters",
+        message: "Message must be between 1-500 characters",
         timestamp: new Date(),
       });
       return;
@@ -47,7 +47,7 @@ export const sendMessage = async (
   } catch (error) {
     console.error("Chat error:", error);
     res.status(500).json({
-      reply: "Sorry, I'm having trouble right now. Please try again later.",
+      message: "The assistant is unavailable right now.",
       timestamp: new Date(),
     });
   }

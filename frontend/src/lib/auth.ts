@@ -1,6 +1,7 @@
 import { AUTH_KEY } from "./constants";
 
 import { login as loginAPI, signup as signupAPI } from "../api/auth";
+import { apiCall } from "../api/http";
 
 /* ------------------ types ------------------ */
 
@@ -108,6 +109,15 @@ export async function signup(
   }
 }
 
-export function logout() {
+export async function logout() {
+  // Clear locally first so the UI updates even if the call fails, then tell
+  // the server. Without this the refresh token stayed valid after sign out
+  // and the httpOnly cookies were never cleared, so /auth/refresh could
+  // still mint access tokens for a "logged out" session.
   clearToken();
+  try {
+    await apiCall("/auth/logout", "POST");
+  } catch {
+    // Signing out must always succeed from the user's point of view.
+  }
 }

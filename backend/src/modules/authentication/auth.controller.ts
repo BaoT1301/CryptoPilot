@@ -52,7 +52,7 @@ export const SignUp = async (
   // issued JWT then carried role:"admin", passing Authorize(ERole.admin) and
   // exposing every user's PII via GET /api/profile. Roles are assigned
   // server-side only.
-  const { email, password, confirmPassword } = req.body;
+  const { email, password, confirmPassword, name } = req.body;
   if (!email || !password)
     return res.status(400).json({ message: "Missing email or password" });
   if (!isValidEmail(email))
@@ -75,7 +75,7 @@ export const SignUp = async (
 
     const userId = uuidv4();
     const newUser = await create(
-      { userId, email, password: hashedPassword, role: ERole.user },
+      { userId, email, name, password: hashedPassword, role: ERole.user },
       session
     );
 
@@ -83,7 +83,9 @@ export const SignUp = async (
       [
         {
           userId: newUser.userId,
-          firstName: email.split("@")[0],
+          // Use the name the user actually gave us. This fell back to the
+          // email prefix because `name` was never read off the body.
+          firstName: (name || "").trim() || email.split("@")[0],
           lastName: "",
           joinDate: new Date(),
         },

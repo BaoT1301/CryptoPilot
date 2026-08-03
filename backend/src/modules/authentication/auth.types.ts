@@ -19,6 +19,8 @@ export interface AuthResponse {
 export interface RegisterRequest {
   userId: string;
   email: string;
+  /** Display name supplied at signup. Was sent by the client and dropped. */
+  name?: string;
   password: string;
   confirmPassword?: string;
   role: ERole;

@@ -18,6 +18,12 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema(
   {
     userId: { type: String, required: true, unique: true },
+    // Declared on IUser but missing from the schema, so every user was saved
+    // without a name and the JWT carried userName: undefined.
+    name: {
+      type: String,
+      trim: true,
+    },
     email: {
       type: String,
       required: [true, "Email is required"],

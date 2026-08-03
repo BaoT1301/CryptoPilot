@@ -79,7 +79,7 @@ export function WithdrawDetailsCard({ withdraw }: Props) {
         <div className="flex justify-between">
           <span className="text-muted-foreground">Confirmations</span>
           <span>
-            {withdraw.confirmations} / {withdraw.networkMeta.requiredConfirmations}
+            {withdraw.confirmations} / {withdraw.networkMeta?.requiredConfirmations ?? "?"}
           </span>
         </div>
 

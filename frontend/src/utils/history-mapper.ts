@@ -26,12 +26,16 @@ export function mapApiToRow(entry: HistoryApiEntry): HistoryRow {
 
   const fee = "0.10 USDT";
 
+  // The API returns FILLED / PARTIALLY_FILLED / CANCELLED. This previously
+  // compared against Title Case, so nothing ever matched and every row fell
+  // through to the "Filled" default, showing cancelled orders as executed.
+  const normalised = String(entry.status ?? "").toUpperCase().replace(/\s+/g, "_");
   const status: TradeStatus =
-    entry.status === "Filled" ||
-    entry.status === "Partially Filled" ||
-    entry.status === "Cancelled"
-      ? entry.status
-      : "Filled";
+    normalised === "CANCELLED"
+      ? "Cancelled"
+      : normalised === "PARTIALLY_FILLED"
+        ? "Partially Filled"
+        : "Filled";
 
   return {
     id: entry._id,

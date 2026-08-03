@@ -91,7 +91,11 @@ export const UpdateProfile = async (
 
     const { firstName, lastName, avatar, phone, countryId } = req.body;
 
-    if (!firstName || !lastName) {
+    // Only enforce names when the caller is actually changing them. This used
+    // to reject every avatar-only update, so avatars appeared to save (local
+    // state had already changed) but were never persisted.
+    const changingName = firstName !== undefined || lastName !== undefined;
+    if (changingName && (!firstName || !lastName)) {
       return res
         .status(400)
         .json({ message: "first name or last name cannot be empty" });
@@ -119,7 +123,7 @@ export const UpdateProfile = async (
 
     const profile = await FindProfile({ userId }, popOptions);
 
-    return res.status(200).json({ data: toProfileDTO(profile) });
+    return res.status(200).json(toProfileDTO(profile));
   } catch (err) {
     console.log(err);
     return res.status(500).json({ message: "Server Error" });
